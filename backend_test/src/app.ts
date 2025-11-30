@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from 'express';
 import eventsRoute from './routes/eventsRoute';
+import authRoute from './routes/authRoutes'
 import registrationRoute from './routes/registrationRoute';
 import morgan from 'morgan';
 import createHttpError,{isHttpError} from "http-errors";
@@ -16,6 +17,8 @@ app.use(cors({
 app.use(morgan('dev'));
 
 app.use(express.json());
+
+app.use("/api/auth", authRoute)
 
 app.use("/api/events", eventsRoute);
 
