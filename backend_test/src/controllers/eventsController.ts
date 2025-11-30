@@ -2,8 +2,11 @@ import { RequestHandler } from "express";
 import modelEvent from "../models/event";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
+import {CreateEventRequest, UpdateEventRequest, EventsFilter} from "../types/event.types"
 
+// obtener todos los eventos
 
+/*
 export const getEvents: RequestHandler = async (req, res, next) => {
   try {
     const events = await modelEvent.find();
@@ -12,19 +15,11 @@ export const getEvents: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+*/
 
-interface CreateEventBody {
-  title?: string;
-  description?: string;
-  location?: string;
-  startDateTime?: Date;
-  endDateTime?: Date;
-  maxParticipants?: number;
-  interestCategory?: string;
-  status?: string; // Opcional
-}
 
-export const createEvent: RequestHandler<unknown, unknown, CreateEventBody> = async (req, res, next) => {
+// crear un nuevo evento
+export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> = async (req, res, next) => {
   try {
     //Destructuring más limpio
     const {
@@ -35,7 +30,6 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventBody> = as
       endDateTime,
       maxParticipants,
       interestCategory,
-      status = 'pre-activo'  // Valor por defecto
     } = req.body;
 
     if (!title || !description || !location || !startDateTime || !endDateTime || !maxParticipants || !interestCategory) {
@@ -53,6 +47,7 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventBody> = as
         error: 'La fecha de inicio debe ser anterior a la fecha de finalización'
       });
     }
+    
 
     // Crear evento (puedes usar shorthand)
     const newEvent = await modelEvent.create({
@@ -63,9 +58,11 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventBody> = as
       endDateTime,
       maxParticipants,
       interestCategory,
-      status,
+      status: 'activo', // Asignar estado por defecto
       currentParticipants: 0  // Inicializar en 0
     });
+
+
 
     res.status(201).json({
       success: true,
@@ -77,12 +74,13 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventBody> = as
   }
 };
 
+// obtener un evento por id
 export const getEvent: RequestHandler = async (req, res, next) => {
 
   try {
 
     const { eventId } = req.params;
-    if(!mongoose.isValidObjectId(eventId)){
+    if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
     const event = await modelEvent.findById(eventId);
@@ -93,25 +91,15 @@ export const getEvent: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};  
-
-interface UpdateEventBody {
-  title?: string;
-  description?: string;
-  location?: string;
-  startDateTime?: Date;
-  endDateTime?: Date;
-  maxParticipants?: number;
-  interestCategory?: string;
-  status?: string;
-  currentParticipants?: number;
 };
+
+
 interface UpdateEventParams {
   eventId: string;
 };
 
-
-export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEventBody> = async (req, res, next) => {
+// update de evento
+export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEventRequest> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
 
@@ -129,7 +117,7 @@ export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEvent
       });
     }
 
-    if(updateData.startDateTime && updateData.endDateTime){
+    if (updateData.startDateTime && updateData.endDateTime) {
       const start = new Date(updateData.startDateTime);
       const end = new Date(updateData.endDateTime);
       if (start >= end) {
@@ -140,11 +128,11 @@ export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEvent
       }
     }
 
-    if(updateData.startDateTime || updateData.endDateTime){
+    if (updateData.startDateTime || updateData.endDateTime) {
       const event = await modelEvent.findById(eventId);
-      if(event){
-        const startDate= updateData.startDateTime ? new Date(updateData.startDateTime) : event.startDateTime;
-        const endDate= updateData.endDateTime ? new Date(updateData.endDateTime) : event.endDateTime;
+      if (event) {
+        const startDate = updateData.startDateTime ? new Date(updateData.startDateTime) : event.startDateTime;
+        const endDate = updateData.endDateTime ? new Date(updateData.endDateTime) : event.endDateTime;
         if (startDate >= endDate) {
           return res.status(400).json({
             success: false,
@@ -154,11 +142,11 @@ export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEvent
       }
     }
 
-    if(updateData.currentParticipants !== undefined ){
+    if ( updateData.currentParticipants !== undefined) {
       return res.status(400).json({
         success: false,
         error: 'No se puede actualizar currentParticipants directamente'
-      }); 
+      });
     }
 
     // Actualizar SOLO los campos proporcionados
@@ -184,11 +172,11 @@ export const updateEvent: RequestHandler<UpdateEventParams, unknown, UpdateEvent
     next(error);
   }
 };
-
+// delete de evento
 export const deleteEvent: RequestHandler = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    if(!mongoose.isValidObjectId(eventId)){
+    if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
     const deletedEvent = await modelEvent.findByIdAndDelete(eventId);
@@ -197,6 +185,74 @@ export const deleteEvent: RequestHandler = async (req, res, next) => {
     }
     res.sendStatus(204);
   } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getFilteredEvents: RequestHandler<unknown, unknown, unknown, EventsFilter> = async (req, res, next) => {
+  try {
+
+    
+    const page = parseInt(req.query.page||'1');
+    const limit = parseInt(req.query.limit||'6');
+    const skip = (page - 1) * limit;
+
+    const filter: any = {};
+
+    if (req.query.interestCategory) {
+      filter.interestCategory = req.query.interestCategory;
+    };
+
+    if (req.query.status) {
+      filter.status = req.query.status;
+    };
+
+    if (req.query.dateFrom || req.query.dateTo) {
+      filter.startDateTime = {};
+      if (req.query.dateFrom) {
+        filter.startDateTime.$gte = new Date(req.query.dateFrom);
+      }
+      if (req.query.dateTo) {
+        filter.startDateTime.$lte = new Date(req.query.dateTo);
+      }
+    };
+
+    if (req.query.search) {
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    const now = new Date();
+    await modelEvent.updateMany(
+      {
+        ...filter,
+        endDateTime: {$lt:now},
+        status: {$in: ['activo', 'agotado']}
+      },
+      {status:'finalizado'}
+    )
+
+    const [events, totalEvents] = await Promise.all([
+      modelEvent.find(filter).skip(skip).limit(limit).sort({ startDateTime: 1 }),
+      modelEvent.countDocuments(filter)]);
+
+      const totalPages = Math.ceil(totalEvents / limit);
+    res.status(200).json({
+      success: true,
+      data: events,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalEvents,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
+
+  }catch (error) {
     next(error);
   }
 };

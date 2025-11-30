@@ -3,7 +3,7 @@ import * as EventController from '../controllers/eventsController';
 
 
 const router= express.Router();
-router.get("/", EventController.getEvents)
+router.get("/", EventController.getFilteredEvents)
 
 router.post("/", EventController.createEvent);
 

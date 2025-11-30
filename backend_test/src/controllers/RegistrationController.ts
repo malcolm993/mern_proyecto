@@ -2,7 +2,6 @@ import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import modelEvent from "../models/event";
-import { updateEvent } from "./eventsController";
 
 // aumentar reserva evento
 
@@ -81,7 +80,7 @@ export const leaveEvent: RequestHandler<{ eventId: string }> = async (req, res, 
       success: true,
       message: 'Has abandonado el evento exitosamente.',
       data: {
-        event: updateEvent,
+        event: event,
         participants: {
           anotados: event.currentParticipants,
           maximo: event.maxParticipants

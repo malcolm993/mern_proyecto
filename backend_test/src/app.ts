@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { NextFunction, Request, Response } from 'express';
 import eventsRoute from './routes/eventsRoute';
+import registrationRoute from './routes/registrationRoute';
 import morgan from 'morgan';
 import createHttpError,{isHttpError} from "http-errors";
 import cors from 'cors';
@@ -18,6 +19,7 @@ app.use(express.json());
 
 app.use("/api/events", eventsRoute);
 
+app.use("/api/events", registrationRoute);
 
 app.use((req,res,next) => {
   next(createHttpError(404, 'Ruta no encontrada'));
