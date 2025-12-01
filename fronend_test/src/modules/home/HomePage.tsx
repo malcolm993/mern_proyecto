@@ -1,13 +1,17 @@
 // src/modules/home/HomePage.tsx
 import React from 'react';
 import { Space, Typography, Divider } from 'antd';
-import  EventsGrid  from '../../components/events/EventsGrid';
+import EventsGrid from '../../components/events/EventsGrid';
 import { useEvents } from '../events/useEvents';
 
 const { Title, Paragraph } = Typography;
 
 const HomePage: React.FC = () => {
-  const { data: events, isLoading, error } = useEvents();
+  const { data: eventsResponse, isLoading, error } = useEvents({
+    status:'activo',
+    page:1,
+    limit:6
+  });
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -22,11 +26,11 @@ const HomePage: React.FC = () => {
 
       <Divider />
 
-      {/* 🆕 Lista de Eventos con nuevo diseño */}
+      {/* ✅ CORREGIDO: Extraer .data de la respuesta */}
       <div>
         <Title level={2}>📅 Próximos Eventos</Title>
         <EventsGrid 
-          events={events || []} 
+          events={eventsResponse?.data || []}  // ← ESTA ES LA SOLUCIÓN
           loading={isLoading}
           error={error ? 'Error al cargar eventos' : null}
         />

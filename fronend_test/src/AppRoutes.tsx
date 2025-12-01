@@ -1,26 +1,25 @@
-// src/AppRoutes.tsx
+// src/AppRoutes.tsx (actualizado)
 import { Routes, Route } from 'react-router-dom';
 import AppLayout from './components/layout/AppLayout';
 import HomePage from './modules/home/HomePage';
 import EventsPage from './modules/events/EventsPage';
-import EventDetailPage from './modules/events/EventDetailPage'
+import EventDetailPage from './modules/events/EventDetailPage';
+import LoginPage from './modules/auth/LoginPage'; 
+import RegisterPage from './modules/auth/RegisterPage'; 
 
 function AppRoutes() {
   return (
     <Routes>
+      {/* Rutas públicas con layout */}
       <Route element={<AppLayout />}>
-        {/* Página Principal */}
         <Route path="/" element={<HomePage />} />
-        
-        {/* 🆕 Página de Eventos con nuevo diseño */}
         <Route path="/events" element={<EventsPage />} />
-        
-        {/* Futuras páginas */}
-        {/* <Route path="/profile" element={<ProfilePage />} /> */}
-
         <Route path="/events/:eventId" element={<EventDetailPage />} />
-
       </Route>
+
+      {/* 🆕 Rutas de auth sin layout */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
     </Routes>
   );
 }

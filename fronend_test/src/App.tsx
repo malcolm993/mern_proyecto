@@ -1,11 +1,10 @@
-// src/App.tsx
+// src/App.tsx (actualizado)
 import { ConfigProvider } from 'antd'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query' // ✅ Corregido a @tanstack
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { antdTheme } from './styles/antd-theme'
-
-
-import AppRoutes from './AppRoutes' // ✅ Ahora este archivo existe
+import { AuthProvider } from './context/authContext' 
+import AppRoutes from './AppRoutes'
 import './styles/global.css'
 
 const queryClient = new QueryClient({
@@ -22,7 +21,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider theme={antdTheme}>
         <BrowserRouter>
-          <AppRoutes />
+          <AuthProvider> 
+            <AppRoutes />
+          </AuthProvider>
         </BrowserRouter>
       </ConfigProvider>
     </QueryClientProvider>
