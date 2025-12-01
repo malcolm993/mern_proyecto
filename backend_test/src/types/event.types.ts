@@ -44,6 +44,7 @@ export interface EventsFilter {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+  myReservation?: string
 }
 
 export interface EventsResponse {

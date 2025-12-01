@@ -3,6 +3,7 @@ import modelEvent from "../models/event";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import {CreateEventRequest, UpdateEventRequest, EventsFilter} from "../types/event.types"
+import reservation from "../models/reservation";
 
 // obtener todos los eventos
 
@@ -224,6 +225,18 @@ export const getFilteredEvents: RequestHandler<unknown, unknown, unknown, Events
         { description: { $regex: req.query.search, $options: 'i' } }
       ];
     }
+
+    if(req.query.myReservation === "true" && req.user){
+      const myReservation = await reservation.find({
+        user: req.user.userId,
+        status: 'active'
+      }).select('event');
+
+      const eventIds = myReservation.map(r => r.event);
+      filter._id = { $in: eventIds}
+    }
+
+
 
     const now = new Date();
     await modelEvent.updateMany(
