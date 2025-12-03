@@ -23,7 +23,7 @@ const ReservationCard: React.FC<ReservationCardProps> = ({
   isCancelling = false
 }) => {
   const navigate = useNavigate();
-  const event = reservation.eventData; // 
+  const event = reservation.eventDetails; // 
 
   // Formatear fecha
   const formatDate = (dateString: string) => {

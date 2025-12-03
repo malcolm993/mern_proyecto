@@ -1,4 +1,4 @@
-// Tipos relacionados con eventos
+// backend/src/types/event.types.ts
 export interface Event {
   _id: string;
   title: string;
@@ -10,6 +10,7 @@ export interface Event {
   currentParticipants: number;
   status: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
   interestCategory: 'tecnología' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking';
+  createdBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,8 +19,8 @@ export interface CreateEventRequest {
   title: string;
   description: string;
   location: string;
-  startDateTime: Date;
-  endDateTime: Date;
+  startDateTime: string; // string para requests HTTP
+  endDateTime: string;   // string para requests HTTP
   maxParticipants: number;
   interestCategory: string;
 }
@@ -28,12 +29,12 @@ export interface UpdateEventRequest {
   title?: string;
   description?: string;
   location?: string;
-  startDateTime?: Date;
-  endDateTime?: Date;
+  startDateTime?: string;
+  endDateTime?: string;
   maxParticipants?: number;
   interestCategory?: string;
-  status?: string;
-  currentParticipants?:number;
+  currentParticipants?:number
+  status?: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
 }
 
 export interface EventsFilter {
@@ -44,7 +45,7 @@ export interface EventsFilter {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
-  myReservation?: string
+  myReservation?: string;
 }
 
 export interface EventsResponse {
@@ -57,4 +58,10 @@ export interface EventsResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
+}
+
+export interface SingleEventResponse {
+  success: boolean;
+  message: string;
+  data: Event;
 }

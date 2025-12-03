@@ -19,3 +19,22 @@ export interface EventResponse {
   success: boolean
   data: Event
 }
+
+export interface CreateEventRequest {
+  title: string;
+  description: string;
+  location: string;
+  startDateTime: string;
+  endDateTime: string;
+  maxParticipants: number;
+  interestCategory: string;
+}
+
+export interface CreateEventResponse {
+  success: boolean;
+  message: string;
+  data: {
+    event: Event;
+  };
+  error?: string;
+}

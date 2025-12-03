@@ -9,7 +9,7 @@ export interface Reservation {
 }
 
 export interface ReservationWithEvent extends Reservation {
-  eventData?: {
+  eventDetails?: {
     _id: string;
     title: string;
     startDateTime: string;
