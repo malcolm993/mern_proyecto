@@ -6,6 +6,7 @@ import EventsPage from './modules/events/EventsPage';
 import EventDetailPage from './modules/events/EventDetailPage';
 import LoginPage from './modules/auth/LoginPage'; 
 import RegisterPage from './modules/auth/RegisterPage'; 
+import MyReservationPage from './modules/reservations/MyReservationPage';
 
 function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:eventId" element={<EventDetailPage />} />
+        <Route path='/my-reservations' element={<MyReservationPage/>}/>
       </Route>
 
       {/* 🆕 Rutas de auth sin layout */}

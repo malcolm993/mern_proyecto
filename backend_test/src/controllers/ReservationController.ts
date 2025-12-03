@@ -4,7 +4,7 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import Reservation from "../models/reservation";
 import Event from "../models/event";
-import { CreateReservationRequest, ReservationResponse, UserReservationsResponse,PopulatedReservation } from "../types/reservation.type";
+import { CreateReservationRequest, ReservationResponse, UserReservationsResponse } from "../types/reservation.type";
 
 // Crear nueva reserva
 export const createReservation: RequestHandler<unknown, unknown, CreateReservationRequest> = async (req, res, next) => {
@@ -72,7 +72,7 @@ export const createReservation: RequestHandler<unknown, unknown, CreateReservati
 
     // Incrementar currentParticipants en el evento
     event.currentParticipants += 1;
-    
+
     // Actualizar estado si se llenó
     if (event.currentParticipants >= event.maxParticipants) {
       event.status = 'agotado';
@@ -148,12 +148,12 @@ export const cancelReservation: RequestHandler = async (req, res, next) => {
     // Decrementar currentParticipants en el evento
     if (event) {
       event.currentParticipants = Math.max(0, event.currentParticipants - 1);
-      
+
       // Reactivar evento si estaba agotado
       if (event.status === 'agotado' && event.currentParticipants < event.maxParticipants) {
         event.status = 'activo';
       }
-      
+
       await event.save();
     }
 
@@ -187,25 +187,39 @@ export const getUserReservations: RequestHandler = async (req, res, next) => {
     }
 
     const reservations = await Reservation.find({ user: userId })
-      .populate('event', 'title startDateTime endDateTime location status')
-      .sort({ createdAt: -1 }) as unknown as PopulatedReservation[];
+      .populate('event', 'title startDateTime endDateTime location status interestCategory')
+      .sort({ createdAt: -1 });
 
     const response: UserReservationsResponse = {
       success: true,
       data: {
-        reservations: reservations.map(reservation => ({
-          _id: reservation._id.toString(),
-          status: reservation.status,
-          createdAt: reservation.createdAt,
-          eventDetails: {
-            _id: reservation._id.toString(),
-            title: reservation.event.title,
-            startDateTime: reservation.event.startDateTime,
-            endDateTime: reservation.event.endDateTime,
-            location: reservation.event.location,
-            status: reservation.event.status
+        reservations: reservations.map(reservation => {
+          // Validar que el evento está poblado
+          if (!reservation.event || typeof reservation.event === 'string') {
+            throw createHttpError(500, 'Error al cargar detalles del evento');
           }
-        }))
+
+          // Asegurar que tenemos un objeto de evento válido
+          const event = reservation.event as any;
+
+          return {
+            _id: reservation._id.toString(),
+            user: reservation.user.toString(),
+            event: event._id.toString(), // ID del evento
+            status: reservation.status,
+            createdAt: reservation.createdAt.toISOString(),
+            // updatedAt no está en la interfaz, así que lo omitimos
+            eventDetails: {
+              _id: event._id.toString(), // ✅ Corregido: usar event._id
+              title: event.title || '',
+              startDateTime: event.startDateTime?.toISOString() || '',
+              endDateTime: event.endDateTime?.toISOString() || '',
+              location: event.location || '',
+              status: event.status || '',
+              interestCategory: event.interestCategory || '' // ✅ Agregado
+            }
+          };
+        })
       }
     };
 
@@ -213,8 +227,7 @@ export const getUserReservations: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
+}
 
 // Obtener estadísticas de reservas del usuario
 export const getReservationStats: RequestHandler = async (req, res, next) => {

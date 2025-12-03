@@ -1,12 +1,13 @@
-// src/components/layout/Navbar.tsx (actualizado)
+// src/components/layout/Navbar.tsx - AGREGAR ENLACE
 import React from 'react';
 import { Menu, Button, Dropdown, Space, Avatar } from 'antd';
-import { 
-  CalendarOutlined, 
-  HomeOutlined, 
+import {
+  CalendarOutlined,
+  HomeOutlined,
   UserOutlined,
   LoginOutlined,
-  LogoutOutlined 
+  LogoutOutlined,
+  BookOutlined // 🆕
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
@@ -22,6 +23,11 @@ const Navbar: React.FC = () => {
   };
 
   const userMenuItems = [
+    {
+      key: '/my-reservations', // 🆕
+      icon: <BookOutlined />,
+      label: 'Mis Reservas',
+    },
     {
       key: '/profile',
       icon: <UserOutlined />,
@@ -62,15 +68,27 @@ const Navbar: React.FC = () => {
       {/* Sección de usuario */}
       <Space>
         {user ? (
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+          <Dropdown
+            menu={{
+              items: userMenuItems,
+              onClick: ({ key }) => {
+                if (key === 'logout') {
+                  handleLogout();
+                } else {
+                  navigate(key); // Esto navegará a '/my-reservations'
+                }
+              }
+            }}
+            placement="bottomRight"
+          >
             <Button type="text" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Avatar size="small" icon={<UserOutlined />} />
               {user.name}
             </Button>
           </Dropdown>
         ) : (
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<LoginOutlined />}
             onClick={() => navigate('/login')}
           >

@@ -30,15 +30,18 @@ export interface UserReservationsResponse {
   data: {
     reservations: Array<{
       _id: string;
-      status: string;
-      createdAt: Date;
+      user: string;
+      event: string;
+      status: 'active'| 'cancelled' | 'completed';
+      createdAt: string;
       eventDetails: {
         _id: string;
         title: string;
-        startDateTime: Date;
-        endDateTime: Date;
+        startDateTime: string;
+        endDateTime: string;
         location: string;
         status: string;
+        interestCategory: string;
       };
     }>;
   };

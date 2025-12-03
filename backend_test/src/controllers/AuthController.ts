@@ -126,22 +126,31 @@ export const login: RequestHandler<unknown, unknown, LoginRequest> = async (req,
 // Obtener usuario actual
 export const getCurrentUser: RequestHandler = async (req, res, next) => {
   try {
-    // ✅ Ahora req.user existe gracias al middleware
     if (!req.user) {
       throw createHttpError(401, 'Usuario no autenticado');
     }
 
-    res.status(200).json({
+    // 🔍 Buscar el usuario completo en la BD
+    const user = await User.findById(req.user.userId).select('-password');
+    
+    if (!user) {
+      throw createHttpError(404, 'Usuario no encontrado');
+    }
+
+    const response: AuthResponse = {
       success: true,
       message: 'Usuario actual obtenido',
-      data: { 
+      data: {
         user: {
-          _id: req.user.userId,
-          email: req.user.email,
-          role: req.user.role
+          _id: user._id.toString(),
+          email: user.email,
+          name: user.name, // ✅ Nombre obtenido de la BD
+          role: user.role
         }
       }
-    });
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }

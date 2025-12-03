@@ -1,14 +1,15 @@
 // src/components/events/EventDetailCard.tsx
 import React from 'react';
-import { Card, Typography, Tag, Button, Divider, Space, Row, Col } from 'antd';
-import { 
-  CalendarOutlined, 
-  EnvironmentOutlined, 
+import { Card, Typography, Tag, Divider, Space, Row, Col } from 'antd';
+import {
+  CalendarOutlined,
+  EnvironmentOutlined,
   UserOutlined,
   ClockCircleOutlined,
   TagOutlined
 } from '@ant-design/icons';
 import { Event } from '../../types/event.types';
+import ReservationButton from '../reservations/ReservationButton';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -71,8 +72,8 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
   };
 
   return (
-    <Card 
-      style={{ 
+    <Card
+      style={{
         borderRadius: 12,
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden'
@@ -80,7 +81,7 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
       bodyStyle={{ padding: 0 }}
     >
       {/* Header con imagen (placeholder por ahora) */}
-      <div 
+      <div
         style={{
           height: '300px',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -127,14 +128,14 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
 
         {/* Tags de categoría y estado */}
         <Space size="middle" style={{ marginBottom: '24px' }}>
-          <Tag 
-            icon={<TagOutlined />} 
+          <Tag
+            icon={<TagOutlined />}
             color={categoryColors[event.interestCategory] || 'blue'}
             style={{ fontSize: '14px', padding: '4px 12px' }}
           >
             {event.interestCategory.charAt(0).toUpperCase() + event.interestCategory.slice(1)}
           </Tag>
-          <Tag 
+          <Tag
             color={statusColors[event.status] || 'blue'}
             style={{ fontSize: '14px', padding: '4px 12px' }}
           >
@@ -168,12 +169,12 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
                   <Tag color="red" style={{ marginLeft: '8px' }}>Agotado</Tag>
                 )}
               </div>
-              
+
               <div>
                 <Text strong>Duración: </Text>
                 <Text>{calculateDuration()}</Text>
               </div>
-              
+
               <div>
                 <Text strong>Participantes actuales: </Text>
                 <Text>
@@ -190,26 +191,14 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
               <Text>
                 Las entradas están {availableTickets > 0 ? 'disponibles' : 'agotadas'} para este evento.
               </Text>
-              <Button 
-                type="primary" 
-                size="large" 
-                disabled={availableTickets === 0 || event.status !== 'activo'}
-                style={{ 
-                  marginTop: '16px',
-                  minWidth: '200px'
-                }}
-              >
-                {availableTickets === 0 ? 'Entradas Agotadas' : 
-                 event.status !== 'activo' ? 'Reservas No Disponibles' : 'Reservar Entrada'}
-              </Button>
-              {(availableTickets === 0 || event.status !== 'activo') && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  {event.status !== 'activo' 
-                    ? `El evento está actualmente ${event.status}.`
-                    : 'Todas las entradas han sido reservadas.'
-                  }
-                </Text>
-              )}
+
+              {/* 🆕 REEMPLAZAR BOTÓN ANTIGUO CON COMPONENTE NUEVO */}
+              <ReservationButton
+                eventId={event._id}
+                status={event.status}
+              />
+
+              {/* Remover el texto condicional antiguo ya que está dentro del componente */}
             </Space>
           </Col>
         </Row>

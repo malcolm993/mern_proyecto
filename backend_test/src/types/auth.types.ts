@@ -21,7 +21,7 @@ export interface AuthResponse {
       name: string;
       role: 'admin' | 'user';
     };
-    token: string;
+    token?: string;
   };
   error?: string;
 }
