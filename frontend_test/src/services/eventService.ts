@@ -1,28 +1,7 @@
 // src/services/eventService.ts
 import { api } from './api';
-import { Event } from '../types/event.types';
+import { Event, EventsResponse, EventsFilter, CreateEventRequest, EventResponse } from '../types/event.types';
 
-export interface EventsFilter {
-  page?: number;
-  limit?: number;
-  category?: string;
-  status?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  search?: string;
-}
-
-export interface EventsResponse {
-  success: boolean;
-  data: Event[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalEvents: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
 
 export const eventService = {
   // Obtener todos los eventos 
@@ -33,12 +12,12 @@ export const eventService = {
 
   //  Obtener un evento por ID
   getEventById: async (id: string): Promise<Event> => {
-    const response = await api.get<Event>(`/events/${id}`);
-    return response.data;
+    const response = await api.get<EventResponse>(`/events/${id}`);
+    return response.data.data;
   },
 
 
-  createEvent: async (eventData: Omit<Event, '_id' | 'createdAt' | 'updatedAt'>): Promise<Event> => {
+  createEvent: async (eventData: CreateEventRequest): Promise<Event> => {
     const response = await api.post<Event>('/events', eventData);
     return response.data;
   },

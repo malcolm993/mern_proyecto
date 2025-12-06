@@ -118,10 +118,21 @@ export const getEventById: RequestHandler = async (req, res, next) => {
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
+
+     const serializedEvent = {
+      ...event.toObject(),
+      _id: event._id.toString(),
+      startDateTime: event.startDateTime.toISOString(),
+      endDateTime: event.endDateTime.toISOString(),
+      createdAt: event.createdAt.toISOString(),
+      updatedAt: event.updatedAt.toISOString(),
+      // Si createdBy es ObjectId, también serialízalo
+      createdBy: event.createdBy.toString()
+    };
     
     res.status(200).json({
       success: true,
-      data: event
+      data: serializedEvent
     });
   } catch (error) {
     next(error);

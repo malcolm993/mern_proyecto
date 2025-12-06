@@ -9,7 +9,8 @@ import {
   TagOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
-import { EventsFilter } from '../../services/eventService';
+import { EventsFilter } from '../../types/event.types';
+
 import { Dayjs } from 'dayjs';
 
 const { Option } = Select;

@@ -1,6 +1,7 @@
-// En modules/events/useEvents.tss
+// En modules/events/useEvents.ts
 import { useQuery } from '@tanstack/react-query';
-import { eventService, EventsFilter, EventsResponse } from '../../services/eventService';
+import { eventService} from '../../services/eventService';
+import { EventsFilter, EventsResponse } from '../../types/event.types';
 
 export const useEvents = (filters: EventsFilter = {}) => {
   return useQuery<EventsResponse, Error>({

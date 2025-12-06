@@ -1,4 +1,4 @@
-// src/types/event.ts
+// frontend/src/types/event.ts
 export interface Event {
   _id: string
   title: string
@@ -37,4 +37,26 @@ export interface CreateEventResponse {
     event: Event;
   };
   error?: string;
+}
+
+export interface EventsFilter {
+  page?: number;
+  limit?: number;
+  category?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}
+
+export interface EventsResponse {
+  success: boolean;
+  data: Event[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalEvents: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }

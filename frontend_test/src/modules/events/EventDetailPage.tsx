@@ -26,6 +26,12 @@ const EventDetailPage: React.FC = () => {
       try {
         setLoading(true);
         const eventData = await eventService.getEventById(eventId);
+
+        console.log('📦 eventData recibido:', eventData);
+        console.log('📦 Tipo de eventData:', typeof eventData);
+        console.log('📦 Es objeto?', typeof eventData === 'object');
+        console.log('📦 Tiene interestCategory?', 'interestCategory' in eventData);
+        console.log('📦 interestCategory valor:', eventData.interestCategory);
         setEvent(eventData);
         setError(null);
       } catch (err) {
@@ -71,11 +77,11 @@ const EventDetailPage: React.FC = () => {
           <Button icon={<ArrowLeftOutlined />} onClick={handleBack}>
             Volver a eventos
           </Button>
-          <Alert 
-            message="Evento no encontrado" 
-            description="El evento que buscas no existe o ha sido eliminado." 
-            type="warning" 
-            showIcon 
+          <Alert
+            message="Evento no encontrado"
+            description="El evento que buscas no existe o ha sido eliminado."
+            type="warning"
+            showIcon
           />
         </Space>
       </div>
@@ -85,8 +91,8 @@ const EventDetailPage: React.FC = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Botón de regreso */}
-      <Button 
-        icon={<ArrowLeftOutlined />} 
+      <Button
+        icon={<ArrowLeftOutlined />}
         onClick={handleBack}
         style={{ marginBottom: '20px' }}
       >

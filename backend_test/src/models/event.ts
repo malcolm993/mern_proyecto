@@ -42,7 +42,7 @@ const eventSchema = new Schema({
     type: String, required: true,
     enum: ['tecnología', 'negocios', 'artes', 'deportes', 'educacion', 'networking'],
   },
-  createdBy: { // ✅ AGREGAR ESTE CAMPO
+  createdBy: { 
     type: Schema.Types.ObjectId,
     ref: 'User',
     required: true
