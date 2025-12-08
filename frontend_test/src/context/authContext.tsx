@@ -1,4 +1,4 @@
-// src/context/authContext.tsx - VERSIÓN CON DEBUGGING
+// frontend/src/context/authContext.tsx - VERSIÓN CON DEBUGGING
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 

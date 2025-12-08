@@ -51,7 +51,7 @@ export const reservationService = {
 
   // Cancelar reserva - CORREGIDO
   cancelReservation: async (reservationId: string): Promise<void> => {
-    const response = await api.delete(`/reservations/${reservationId}`);
+    const response = await api.delete(`/reservation/${reservationId}`);
     if (!response.data.success) {
       throw new Error(response.data.error || 'Error al cancelar reserva');
     }

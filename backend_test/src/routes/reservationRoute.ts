@@ -1,4 +1,4 @@
-// src/routes/reservations.ts
+// backend/src/routes/reservations.ts
 import express from 'express';
 import * as ReservationController from '../controllers/ReservationController';
 import { authenticateToken } from '../middleware/auth';

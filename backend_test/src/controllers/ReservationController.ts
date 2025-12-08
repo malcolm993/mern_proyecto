@@ -1,4 +1,4 @@
-// src/controllers/reservationController.ts
+// backend/src/controllers/reservationController.ts
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
