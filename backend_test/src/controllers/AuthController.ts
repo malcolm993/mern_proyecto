@@ -130,7 +130,7 @@ export const getCurrentUser: RequestHandler = async (req, res, next) => {
       throw createHttpError(401, 'Usuario no autenticado');
     }
 
-    // 🔍 Buscar el usuario completo en la BD
+    //Buscar el usuario completo en la BD
     const user = await User.findById(req.user.userId).select('-password');
     
     if (!user) {

@@ -1,7 +1,7 @@
 // backend/src/routes/reservations.ts
 import express from 'express';
 import * as ReservationController from '../controllers/ReservationController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireAdmin } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -17,6 +17,6 @@ router.delete('/:reservationId', ReservationController.cancelReservation);
 // Obtener reservas del usuario actual
 router.get('/my-reservations', ReservationController.getUserReservations);
 
-router.get('/stats', ReservationController.getReservationStats);
+router.get('/stats', requireAdmin , ReservationController.getReservationStats);
 
 export default router;
