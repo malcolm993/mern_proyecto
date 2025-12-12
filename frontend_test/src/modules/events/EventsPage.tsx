@@ -7,11 +7,13 @@ import { EventsFilter } from '../../types/event.types';
 import { useEvents } from './useEvents';
 import EventFilters from '../../components/events/EventFilters';
 import EventsGrid from '../../components/events/EventsGrid';
+import { useAuth } from '../../context/authContext';
 
 const { Title } = Typography;
 
 const EventsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [filters, setFilters] = useState<EventsFilter>({
     page: 1,
     limit: 6
@@ -30,6 +32,7 @@ const EventsPage: React.FC = () => {
   const handleCreateEvent = () => {
     navigate('/events/create');
   };
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', position: 'relative' }}>
@@ -39,19 +42,20 @@ const EventsPage: React.FC = () => {
       </Title>
 
       {/* Botón flotante en esquina inferior derecha */}
-      <FloatButton
+      {isAdmin && (<FloatButton
         type="primary"
         icon={<PlusOutlined />}
         onClick={handleCreateEvent}
         tooltip="Crear nuevo evento"
         style={{ right: 24, bottom: 24 }}
-      />
+      />)}
+
 
       {/* Componente de filtros */}
       <EventFilters onFilterChange={handleFilterChange} />
-      
+
       {/* Grid de eventos con paginación */}
-      <EventsGrid 
+      <EventsGrid
         events={data?.data || []}
         loading={isLoading}
         error={error?.message}

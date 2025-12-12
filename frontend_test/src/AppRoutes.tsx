@@ -4,11 +4,13 @@ import AppLayout from './components/layout/AppLayout';
 import HomePage from './modules/home/HomePage';
 import EventsPage from './modules/events/EventsPage';
 import EventDetailPage from './modules/events/EventDetailPage';
-import LoginPage from './modules/auth/LoginPage'; 
-import RegisterPage from './modules/auth/RegisterPage'; 
+import LoginPage from './modules/auth/LoginPage';
+import RegisterPage from './modules/auth/RegisterPage';
 import MyReservationPage from './modules/reservations/MyReservationPage';
 import CreateEventPage from './modules/events/CreateEventPage';
 import ProfilePage from './modules/profiles/ProfilePage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import UnauthorizedPage from './modules/auth/UnauthorizedPage';
 
 function AppRoutes() {
   return (
@@ -18,14 +20,31 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:eventId" element={<EventDetailPage />} />
-        <Route path='/my-reservations' element={<MyReservationPage/>}/>
-        <Route path="/events/create" element={<CreateEventPage />} />
-        <Route path='/profile' element={<ProfilePage />} />
+
+
+        <Route path='/my-reservations' element={
+          <ProtectedRoute>
+            <MyReservationPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path='/profile' element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>} />
+
+
+        <Route path="/events/create" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <CreateEventPage />
+          </ProtectedRoute>} />
       </Route>
 
       {/* 🆕 Rutas de auth sin layout */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
+      <Route path='/unauthorized' element={<UnauthorizedPage />} />
     </Routes>
   );
 }
