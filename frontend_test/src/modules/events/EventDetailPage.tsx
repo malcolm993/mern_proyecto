@@ -27,11 +27,11 @@ const EventDetailPage: React.FC = () => {
         setLoading(true);
         const eventData = await eventService.getEventById(eventId);
 
-        console.log('📦 eventData recibido:', eventData);
-        console.log('📦 Tipo de eventData:', typeof eventData);
-        console.log('📦 Es objeto?', typeof eventData === 'object');
-        console.log('📦 Tiene interestCategory?', 'interestCategory' in eventData);
-        console.log('📦 interestCategory valor:', eventData.interestCategory);
+        console.log(' eventData recibido:', eventData);
+        console.log(' Tipo de eventData:', typeof eventData);
+        console.log(' Es objeto?', typeof eventData === 'object');
+        console.log(' Tiene interestCategory?', 'interestCategory' in eventData);
+        console.log(' interestCategory valor:', eventData.interestCategory);
         setEvent(eventData);
         setError(null);
       } catch (err) {
