@@ -16,7 +16,8 @@ const EventsPage: React.FC = () => {
   const { user } = useAuth();
   const [filters, setFilters] = useState<EventsFilter>({
     page: 1,
-    limit: 6
+    limit: 6,
+    status: 'activo', //muestra los eventos activos para el usuario 
   });
 
   const { data, isLoading, error } = useEvents(filters);
@@ -52,7 +53,9 @@ const EventsPage: React.FC = () => {
 
 
       {/* Componente de filtros */}
-      <EventFilters onFilterChange={handleFilterChange} />
+      <EventFilters onFilterChange={handleFilterChange} 
+        allowStatusFilter = {user?.role === 'admin'}
+      />
 
       {/* Grid de eventos con paginación */}
       <EventsGrid

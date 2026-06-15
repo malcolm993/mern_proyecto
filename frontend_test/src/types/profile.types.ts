@@ -2,8 +2,10 @@
 
 export interface UpdateProfileRequest {
   name?: string;
-  email?: string;
-  // Podrías agregar más campos aquí
+  company?: string;
+  businessArea?: string;
+  interests?: string[];
+  bio?: string;
 }
 
 export interface ProfileStats {

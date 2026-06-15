@@ -6,12 +6,15 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Event } from '../../types/event.types';
 import { eventService } from '../../services/eventService';
 import EventDetailCard from '../../components/events/EventDetailCard';
+import { AgendaItem } from '../../types/networking.types';
+import { agendaService } from '../../services/agendaService';
 
 
 const EventDetailPage: React.FC = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const [event, setEvent] = useState<Event | null>(null);
+  const [agenda, setAgenda] = useState<AgendaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,14 +28,12 @@ const EventDetailPage: React.FC = () => {
 
       try {
         setLoading(true);
-        const eventData = await eventService.getEventById(eventId);
-
-        console.log(' eventData recibido:', eventData);
-        console.log(' Tipo de eventData:', typeof eventData);
-        console.log(' Es objeto?', typeof eventData === 'object');
-        console.log(' Tiene interestCategory?', 'interestCategory' in eventData);
-        console.log(' interestCategory valor:', eventData.interestCategory);
+        const [eventData, agendaData] = await Promise.all([
+          eventService.getEventById(eventId),
+          agendaService.getEventAgenda(eventId)
+        ]);
         setEvent(eventData);
+        setAgenda(agendaData);
         setError(null);
       } catch (err) {
         setError('Error al cargar el evento. Por favor, intenta nuevamente.');
@@ -100,7 +101,7 @@ const EventDetailPage: React.FC = () => {
       </Button>
 
       {/* Componente de detalle */}
-      <EventDetailCard event={event} />
+      <EventDetailCard event={event} agenda={agenda} />
     </div>
   );
 };

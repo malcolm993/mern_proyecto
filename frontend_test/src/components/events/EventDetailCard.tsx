@@ -6,18 +6,21 @@ import {
   EnvironmentOutlined,
   UserOutlined,
   ClockCircleOutlined,
-  TagOutlined
+  TagOutlined,
+  ScheduleOutlined
 } from '@ant-design/icons';
 import { Event } from '../../types/event.types';
+import { AgendaItem } from '../../types/networking.types';
 import ReservationButton from '../reservations/ReservationButton';
 
 const { Title, Text, Paragraph } = Typography;
 
 interface EventDetailCardProps {
   event: Event;
+  agenda?: AgendaItem[];
 }
 
-const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
+const EventDetailCard: React.FC<EventDetailCardProps> = ({ event, agenda = [] }) => {
   // Formatear fecha
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -151,6 +154,44 @@ const EventDetailCard: React.FC<EventDetailCardProps> = ({ event }) => {
           <Paragraph style={{ fontSize: '16px', lineHeight: '1.6' }}>
             {event.description || 'Este evento no tiene una descripción disponible.'}
           </Paragraph>
+        </div>
+
+        <Divider />
+
+        <div style={{ marginBottom: '32px' }}>
+          <Title level={3}>
+            <ScheduleOutlined /> Agenda
+          </Title>
+          {agenda.length === 0 ? (
+            <Text type="secondary">Este evento todavÃ­a no tiene actividades de agenda cargadas.</Text>
+          ) : (
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              {agenda.map((item) => (
+                <Card key={item._id} size="small">
+                  <Row gutter={[16, 8]} align="middle">
+                    <Col xs={24} md={5}>
+                      <Text strong>
+                        {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                      </Text>
+                    </Col>
+                    <Col xs={24} md={19}>
+                      <Text strong>{item.title}</Text>
+                      {item.speaker && (
+                        <Text type="secondary" style={{ display: 'block' }}>
+                          Disertante: {item.speaker}
+                        </Text>
+                      )}
+                      {item.description && (
+                        <Paragraph style={{ marginBottom: 0, marginTop: 4 }}>
+                          {item.description}
+                        </Paragraph>
+                      )}
+                    </Col>
+                  </Row>
+                </Card>
+              ))}
+            </Space>
+          )}
         </div>
 
         <Divider />

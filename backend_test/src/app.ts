@@ -2,6 +2,9 @@ import "dotenv/config";
 import express, { NextFunction, Request, Response } from 'express';
 import eventsRoute from './routes/eventsRoute';
 import authRoute from './routes/authRoutes'
+import agendaRoute from './routes/agendaRoute';
+import userRoute from './routes/userRoutes';
+import contactRequestRoute from './routes/contactRequestRoutes';
 
 import reservationRoute from "./routes/reservationRoute";
 import morgan from 'morgan';
@@ -24,6 +27,12 @@ app.use("/api/auth", authRoute)
 app.use("/api/reservation", reservationRoute)
 
 app.use("/api/events", eventsRoute);
+
+app.use("/api/agenda", agendaRoute);
+
+app.use("/api/users", userRoute);
+
+app.use("/api/contact-requests", contactRequestRoute);
 
 
 app.use((req,res,next) => {

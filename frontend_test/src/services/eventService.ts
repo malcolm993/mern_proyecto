@@ -45,6 +45,4 @@ export const eventService = {
     return response.data;
   },
 
-
-
 };

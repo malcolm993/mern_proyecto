@@ -1,54 +1,80 @@
 // src/controllers/authController.ts
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
-import jwt, {SignOptions} from "jsonwebtoken";
-import User from "../models/user";
+import jwt, { SignOptions } from "jsonwebtoken";
+import User, { User as UserDocument } from "../models/user";
 import { RegisterRequest, LoginRequest, AuthResponse, JwtPayload } from "../types/auth.types";
 
 const JWT_SECRET = (process.env.JWT_SECRET) as string;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ? 
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?
   parseInt(process.env.JWT_EXPIRES_IN) : 604800;
 
-if(!JWT_SECRET){
-  throw new Error ("VARIABLE DE ENTORNO JWT_SECRET NO FUE INICALIZADA")
+if (!JWT_SECRET) {
+  throw new Error("VARIABLE DE ENTORNO JWT_SECRET NO FUE INICALIZADA");
 }
+
+const serializeUser = (user: UserDocument) => ({
+  _id: user._id.toString(),
+  email: user.email,
+  name: user.name,
+  role: user.role,
+  ...(user.company ? { company: user.company } : {}),
+  ...(user.businessArea ? { businessArea: user.businessArea } : {}),
+  ...(user.interests ? { interests: user.interests } : {}),
+  ...(user.bio ? { bio: user.bio } : {})
+});
+
 // Generar JWT Token
 const generateToken = (payload: JwtPayload): string => {
   const options: SignOptions = {
     expiresIn: JWT_EXPIRES_IN,
-    algorithm: 'HS256' // ✅ Especificar algoritmo explícitamente
+    algorithm: 'HS256'
   };
   return jwt.sign(payload, JWT_SECRET, options);
 };
+
 // Registrar nuevo usuario
 export const register: RequestHandler<unknown, unknown, RegisterRequest> = async (req, res, next) => {
   try {
-    const { email, password, name, role = 'user' } = req.body;
+    const {
+      email,
+      password,
+      name,
+      role = 'user',
+      company,
+      businessArea,
+      interests = [],
+      bio
+    } = req.body;
 
-    // Validaciones básicas
     if (!email || !password || !name) {
       throw createHttpError(400, 'Email, password y nombre son requeridos');
     }
 
     if (password.length < 6) {
-      throw createHttpError(400, 'La contraseña debe tener al menos 6 caracteres');
+      throw createHttpError(400, 'La contraseÃ±a debe tener al menos 6 caracteres');
     }
 
-    // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw createHttpError(409, 'El email ya está registrado');
+      throw createHttpError(409, 'El email ya estÃ¡ registrado');
     }
 
-    // Crear usuario
-    const user = await User.create({
+    const userData: Record<string, unknown> = {
       email,
-      password, // Se hashea automáticamente en el pre-save hook
+      password,
       name,
-      role
-    });
+      role,
+      interests
+    };
 
-    // Generar token
+    if (company) userData.company = company;
+    if (businessArea) userData.businessArea = businessArea;
+    if (bio) userData.bio = bio;
+
+    const user = new User(userData);
+    await user.save();
+
     const token = generateToken({
       userId: user._id.toString(),
       email: user.email,
@@ -59,12 +85,7 @@ export const register: RequestHandler<unknown, unknown, RegisterRequest> = async
       success: true,
       message: 'Usuario registrado exitosamente',
       data: {
-        user: {
-          _id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role
-        },
+        user: serializeUser(user),
         token
       }
     };
@@ -84,19 +105,16 @@ export const login: RequestHandler<unknown, unknown, LoginRequest> = async (req,
       throw createHttpError(400, 'Email y password son requeridos');
     }
 
-    // Buscar usuario
     const user = await User.findOne({ email });
     if (!user) {
-      throw createHttpError(401, 'Credenciales inválidas');
+      throw createHttpError(401, 'Credenciales invÃ¡lidas');
     }
 
-    // Verificar password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      throw createHttpError(401, 'Credenciales inválidas');
+      throw createHttpError(401, 'Credenciales invÃ¡lidas');
     }
 
-    // Generar token
     const token = generateToken({
       userId: user._id.toString(),
       email: user.email,
@@ -107,12 +125,7 @@ export const login: RequestHandler<unknown, unknown, LoginRequest> = async (req,
       success: true,
       message: 'Login exitoso',
       data: {
-        user: {
-          _id: user._id.toString(),
-          email: user.email,
-          name: user.name,
-          role: user.role
-        },
+        user: serializeUser(user),
         token
       }
     };
@@ -130,9 +143,8 @@ export const getCurrentUser: RequestHandler = async (req, res, next) => {
       throw createHttpError(401, 'Usuario no autenticado');
     }
 
-    //Buscar el usuario completo en la BD
     const user = await User.findById(req.user.userId).select('-password');
-    
+
     if (!user) {
       throw createHttpError(404, 'Usuario no encontrado');
     }
@@ -141,16 +153,53 @@ export const getCurrentUser: RequestHandler = async (req, res, next) => {
       success: true,
       message: 'Usuario actual obtenido',
       data: {
-        user: {
-          _id: user._id.toString(),
-          email: user.email,
-          name: user.name, // ✅ Nombre obtenido de la BD
-          role: user.role
-        }
+        user: serializeUser(user)
       }
     };
 
     res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateCurrentUser: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw createHttpError(401, 'Usuario no autenticado');
+    }
+
+    const { name, company, businessArea, interests, bio } = req.body;
+    const updateData: Record<string, unknown> = {};
+
+    if (name !== undefined) updateData.name = String(name).trim();
+    if (company !== undefined) updateData.company = String(company).trim();
+    if (businessArea !== undefined) updateData.businessArea = String(businessArea).trim();
+    if (bio !== undefined) updateData.bio = String(bio).trim();
+    if (interests !== undefined) {
+      if (!Array.isArray(interests)) {
+        throw createHttpError(400, 'Los intereses deben enviarse como array');
+      }
+      updateData.interests = interests.map((interest) => String(interest).trim()).filter(Boolean);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      throw createHttpError(404, 'Usuario no encontrado');
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Perfil actualizado',
+      data: {
+        user: serializeUser(user)
+      }
+    });
   } catch (error) {
     next(error);
   }

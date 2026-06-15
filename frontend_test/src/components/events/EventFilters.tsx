@@ -16,7 +16,7 @@ import { Dayjs } from 'dayjs';
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-// 🆕 Interfaz para los valores del formulario
+
 interface FilterFormValues {
   search?: string;
   category?: string;
@@ -26,9 +26,10 @@ interface FilterFormValues {
 
 interface EventFiltersProps {
   onFilterChange: (filters: EventsFilter) => void;
+  allowStatusFilter?:boolean; 
 }
 
-const EventFilters: React.FC<EventFiltersProps> = ({ onFilterChange }) => {
+const EventFilters: React.FC<EventFiltersProps> = ({ onFilterChange , allowStatusFilter = false }) => {
   const [form] = Form.useForm<FilterFormValues>();
 
   // Categorías disponibles
@@ -49,7 +50,6 @@ const EventFilters: React.FC<EventFiltersProps> = ({ onFilterChange }) => {
     { value: 'finalizado', label: 'Finalizado' }
   ];
 
-  // 🆕 Tipo correcto para los valores
   const handleSearch = (values: FilterFormValues) => {
     const filters: EventsFilter = {
       page: 1, // Siempre volver a página 1 al filtrar
@@ -126,19 +126,20 @@ const EventFilters: React.FC<EventFiltersProps> = ({ onFilterChange }) => {
 
           {/* Filtro por estado */}
           <Col xs={24} md={5}>
-            <Form.Item<FilterFormValues> name="status" label="Estado">
-              <Select 
-                placeholder="Todos los estados"
-                allowClear
-                suffixIcon={<CheckCircleOutlined />}
-              >
+            {allowStatusFilter && (
+              <Form.Item<FilterFormValues> name="status" label="Estado">
+                <Select 
+                  placeholder="Todos los estados"
+                  allowClear
+                  suffixIcon={<CheckCircleOutlined />}
+                >
                 {statuses.map(status => (
                   <Option key={status.value} value={status.value}>
                     {status.label}
                   </Option>
                 ))}
               </Select>
-            </Form.Item>
+            </Form.Item>)}
           </Col>
 
           {/* Filtro por fecha */}

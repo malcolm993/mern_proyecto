@@ -1,4 +1,6 @@
 // backend/src/types/event.types.ts
+import { Types } from "mongoose";
+
 export interface Event {
   _id: string;
   title: string;
@@ -10,7 +12,7 @@ export interface Event {
   currentParticipants: number;
   status: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
   interestCategory: 'tecnología' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking';
-  createdBy: string;
+  createdBy: Types.ObjectId | string;
   createdAt: Date;
   updatedAt: Date;
 }

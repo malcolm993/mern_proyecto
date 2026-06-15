@@ -4,6 +4,10 @@ export interface RegisterRequest {
   password: string;
   name: string;
   role?: 'admin' | 'user';
+  company?: string;
+  businessArea?: string;
+  interests?: string[];
+  bio?: string;
 }
 
 export interface LoginRequest {
@@ -20,6 +24,10 @@ export interface AuthResponse {
       email: string;
       name: string;
       role: 'admin' | 'user';
+      company?: string;
+      businessArea?: string;
+      interests?: string[];
+      bio?: string;
     };
     token?: string;
   };

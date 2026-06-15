@@ -27,7 +27,7 @@ const RegisterPage: React.FC = () => {
 
     setLoading(true);
     try {
-      await register(values.name, values.email, values.password);
+      await register(values.name, values.email, values.password, values.role);
       message.success('¡Cuenta creada exitosamente!');
       navigate('/events');
     } catch (error) {

@@ -78,7 +78,7 @@ const CreateEventPage: React.FC = () => {
   };
 
   const validateEndDate: RuleObject['validator'] = (
-    rule: RuleObject,
+    _rule: RuleObject,
     value?: [Dayjs , Dayjs]
   ) => {
     if (!value || value.length !== 2) {

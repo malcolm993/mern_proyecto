@@ -1,36 +1,55 @@
-// frontend/src/modules/profile/ProfilePage.tsx
-import React from 'react';
-import { 
-  Card, 
-  Typography, 
-  Space, 
-  Button, 
-  Row, 
-  Col, 
-  Avatar, 
+import React, { useEffect, useState } from 'react';
+import {
+  Card,
+  Typography,
+  Space,
+  Button,
+  Row,
+  Col,
+  Avatar,
   Tag,
-  Divider
+  Divider,
+  Form,
+  Input,
+  Select,
+  message
 } from 'antd';
-import { 
-  UserOutlined, 
-  MailOutlined, 
+import {
+  UserOutlined,
+  MailOutlined,
   CalendarOutlined,
-  SettingOutlined
+  SettingOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../context/authContext';
+import { profileService } from '../../services/profileService';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
+
+const businessAreaOptions = ['tecnologia', 'negocios', 'artes', 'deportes', 'educacion', 'networking'];
 
 const ProfilePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
+  const [form] = Form.useForm();
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      form.setFieldsValue({
+        name: user.name,
+        company: user.company,
+        businessArea: user.businessArea,
+        interests: user.interests || [],
+        bio: user.bio
+      });
+    }
+  }, [form, user]);
 
   if (!user) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 20px' }}>
-        <Title level={2}>Debes iniciar sesión</Title>
-        <Text type="secondary">
-          Por favor inicia sesión para ver tu perfil
-        </Text>
+        <Title level={2}>Debes iniciar sesiÃ³n</Title>
+        <Text type="secondary">Por favor inicia sesiÃ³n para ver tu perfil</Text>
       </div>
     );
   }
@@ -42,36 +61,43 @@ const ProfilePage: React.FC = () => {
 
   const roleInfo = roleLabels[user.role] || roleLabels.user;
 
+  const handleSaveProfile = async (values: {
+    name: string;
+    company?: string;
+    businessArea?: string;
+    interests?: string[];
+    bio?: string;
+  }) => {
+    setSaving(true);
+    try {
+      const updatedUser = await profileService.updateProfile(values);
+      updateUser(updatedUser);
+      message.success('Perfil actualizado');
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Error al actualizar perfil');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <Title level={1}>
           <UserOutlined /> Mi Perfil
         </Title>
-        <Text type="secondary">
-          Información básica de tu cuenta
-        </Text>
+        <Text type="secondary">InformaciÃ³n de cuenta y datos de networking</Text>
       </div>
 
       <Row gutter={[24, 24]}>
-        {/* Columna izquierda - Información personal */}
         <Col xs={24} md={16}>
           <Card title="Datos del Usuario">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <Avatar 
-                  size={64} 
-                  icon={<UserOutlined />}
-                  style={{ backgroundColor: '#1890ff' }}
-                />
+                <Avatar size={64} icon={<UserOutlined />} style={{ backgroundColor: '#1890ff' }} />
                 <div>
-                  <Title level={3} style={{ margin: 0 }}>
-                    {user.name}
-                  </Title>
-                  <Tag color={roleInfo.color}>
-                    {roleInfo.label}
-                  </Tag>
+                  <Title level={3} style={{ margin: 0 }}>{user.name}</Title>
+                  <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
                 </div>
               </div>
 
@@ -89,7 +115,7 @@ const ProfilePage: React.FC = () => {
                     </Space>
                   </Card>
                 </Col>
-                
+
                 <Col xs={24} md={12}>
                   <Card size="small">
                     <Space>
@@ -103,22 +129,57 @@ const ProfilePage: React.FC = () => {
                 </Col>
               </Row>
 
-              {/* Información adicional según rol */}
+              <Divider />
+
+              <Form form={form} layout="vertical" onFinish={handleSaveProfile}>
+                <Row gutter={[16, 0]}>
+                  <Col xs={24} md={12}>
+                    <Form.Item name="name" label="Nombre" rules={[{ required: true, message: 'Ingresa tu nombre' }]}>
+                      <Input />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item name="company" label="Empresa">
+                      <Input placeholder="Nombre de empresa o emprendimiento" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item name="businessArea" label="Rubro">
+                      <Select allowClear placeholder="Selecciona un rubro">
+                        {businessAreaOptions.map((area) => (
+                          <Select.Option key={area} value={area}>{area}</Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} md={12}>
+                    <Form.Item name="interests" label="Intereses">
+                      <Select mode="tags" placeholder="Ej: IA, ventas, networking" />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24}>
+                    <Form.Item name="bio" label="DescripciÃ³n breve">
+                      <Input.TextArea rows={3} maxLength={300} showCount />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Button type="primary" htmlType="submit" loading={saving}>
+                  Guardar perfil
+                </Button>
+              </Form>
+
               {user.role === 'admin' && (
                 <>
                   <Divider />
                   <div style={{ background: '#f0f9ff', padding: '16px', borderRadius: '8px' }}>
-                    <Title level={4} style={{ marginTop: 0 }}>
-                      Permisos de Organizador
-                    </Title>
+                    <Title level={4} style={{ marginTop: 0 }}>Permisos de Organizador</Title>
                     <Space direction="vertical" size="small">
-                      <Text>✓ Crear eventos empresariales</Text>
-                      <Text>✓ Gestionar inscripciones</Text>
-                      <Text>✓ Descargar listados de participantes</Text>
+                      <Text>Crear eventos empresariales</Text>
+                      <Text>Gestionar inscripciones</Text>
+                      <Text>Descargar listados de participantes</Text>
                       <div style={{ marginTop: '16px' }}>
-                        <Button type="primary" href="/events/create">
-                          Ir a Crear Evento
-                        </Button>
+                        <Button type="primary" href="/events/create">Ir a Crear Evento</Button>
                       </div>
                     </Space>
                   </div>
@@ -128,70 +189,35 @@ const ProfilePage: React.FC = () => {
           </Card>
         </Col>
 
-        {/* Columna derecha - Acciones rápidas */}
         <Col xs={24} md={8}>
-          <Card title="Acciones Disponibles">
+          <Card title="Networking">
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Button 
-                block 
-                icon={<CalendarOutlined />}
-                href="/events"
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-              >
-                Explorar Eventos
-              </Button>
-              
-              <Button 
-                block 
-                icon={<CalendarOutlined />}
-                href="/reservations"
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-              >
-                Mis Reservas
-              </Button>
-              
-              {user.role === 'admin' && (
-                <Button 
-                  block 
-                  type="primary"
-                  icon={<CalendarOutlined />}
-                  href="/events/create"
-                  style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-                >
-                  Crear Nuevo Evento
-                </Button>
-              )}
-              
-              <Divider style={{ margin: '16px 0' }} />
-              
-              <Button 
-                block 
-                danger
-                onClick={logout}
-                style={{ textAlign: 'left', justifyContent: 'flex-start' }}
-              >
-                Cerrar Sesión
+              <Paragraph type="secondary">
+                CompletÃ¡ empresa, rubro e intereses para recibir sugerencias de participantes afines.
+              </Paragraph>
+              <Button block icon={<TeamOutlined />} href="/networking">
+                Ver sugerencias
               </Button>
             </Space>
           </Card>
 
-          {/* Info del sistema */}
-          <Card title="Estado del Sistema" style={{ marginTop: 24 }}>
-            <Space direction="vertical" size="middle">
-              <div>
-                <Text strong style={{ display: 'block', marginBottom: 4 }}>Versión</Text>
-                <Text type="secondary">1.0.0</Text>
-              </div>
-              
-              <div>
-                <Text strong style={{ display: 'block', marginBottom: 4 }}>Estado de la cuenta</Text>
-                <Tag color="green">Activa</Tag>
-              </div>
-              
-              <div>
-                <Text strong style={{ display: 'block', marginBottom: 4 }}>Tipo de usuario</Text>
-                <Tag color={roleInfo.color}>{roleInfo.label}</Tag>
-              </div>
+          <Card title="Acciones Disponibles" style={{ marginTop: 24 }}>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Button block icon={<CalendarOutlined />} href="/events">
+                Explorar Eventos
+              </Button>
+              <Button block icon={<CalendarOutlined />} href="/my-reservations">
+                Mis Reservas
+              </Button>
+              {user.role === 'admin' && (
+                <Button block type="primary" icon={<CalendarOutlined />} href="/events/create">
+                  Crear Nuevo Evento
+                </Button>
+              )}
+              <Divider style={{ margin: '16px 0' }} />
+              <Button block danger onClick={logout}>
+                Cerrar SesiÃ³n
+              </Button>
             </Space>
           </Card>
         </Col>

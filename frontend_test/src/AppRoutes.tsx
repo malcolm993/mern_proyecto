@@ -9,8 +9,10 @@ import RegisterPage from './modules/auth/RegisterPage';
 import MyReservationPage from './modules/reservations/MyReservationPage';
 import CreateEventPage from './modules/events/CreateEventPage';
 import ProfilePage from './modules/profiles/ProfilePage';
+import NetworkingPage from './modules/networking/NetworkingPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UnauthorizedPage from './modules/auth/UnauthorizedPage';
+import { NotFound } from './modules/notFound';
 
 function AppRoutes() {
   return (
@@ -33,11 +35,18 @@ function AppRoutes() {
             <ProfilePage />
           </ProtectedRoute>} />
 
+        <Route path='/networking' element={
+          <ProtectedRoute>
+            <NetworkingPage />
+          </ProtectedRoute>} />
+
 
         <Route path="/events/create" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <CreateEventPage />
           </ProtectedRoute>} />
+
+        <Route path="*" element={<NotFound />} />
       </Route>
 
       {/* 🆕 Rutas de auth sin layout */}

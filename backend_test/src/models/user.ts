@@ -8,6 +8,10 @@ export interface User extends Document {
   password: string;
   name: string;
   role: 'admin' | 'user';
+  company?: string;
+  businessArea?: string;
+  interests: string[];
+  bio?: string;
   createdAt: Date;
   updatedAt: Date;
   
@@ -39,7 +43,32 @@ const userSchema = new Schema<User>({
     type: String,
     enum: ['admin', 'user'],
     default: 'user'
-  }
+  },
+  company: {
+    type: String,
+    trim: true,
+    maxlength: 100
+  },
+  businessArea: {
+    type: String,
+    trim: true,
+    maxlength: 80
+  },
+  interests: {
+    type: [String],
+    default: [],
+    validate: {
+      validator: function(value: string[]) {
+        return value.length <= 10;
+      },
+      message: 'No puedes cargar mÃ¡s de 10 intereses'
+    }
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: 300
+  },
 }, {
   timestamps: true
 });

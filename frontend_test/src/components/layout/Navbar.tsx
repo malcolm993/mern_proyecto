@@ -1,4 +1,3 @@
-// src/components/layout/Navbar.tsx - AGREGAR ENLACE
 import React from 'react';
 import { Menu, Button, Dropdown, Space, Avatar } from 'antd';
 import {
@@ -7,7 +6,8 @@ import {
   UserOutlined,
   LoginOutlined,
   LogoutOutlined,
-  BookOutlined // 🆕
+  BookOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
@@ -24,7 +24,7 @@ const Navbar: React.FC = () => {
 
   const userMenuItems = [
     {
-      key: '/my-reservations', // 🆕
+      key: '/my-reservations',
       icon: <BookOutlined />,
       label: 'Mis Reservas',
     },
@@ -36,7 +36,7 @@ const Navbar: React.FC = () => {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Cerrar Sesión',
+      label: 'Cerrar SesiÃ³n',
       onClick: handleLogout,
     },
   ];
@@ -52,11 +52,15 @@ const Navbar: React.FC = () => {
       icon: <CalendarOutlined />,
       label: 'Eventos',
     },
+    {
+      key: '/networking',
+      icon: <TeamOutlined />,
+      label: 'Networking',
+    },
   ];
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-      {/* Menú principal */}
       <Menu
         mode="horizontal"
         selectedKeys={[location.pathname]}
@@ -65,7 +69,6 @@ const Navbar: React.FC = () => {
         style={{ flex: 1, borderBottom: 'none' }}
       />
 
-      {/* Sección de usuario */}
       <Space>
         {user ? (
           <Dropdown
@@ -75,7 +78,7 @@ const Navbar: React.FC = () => {
                 if (key === 'logout') {
                   handleLogout();
                 } else {
-                  navigate(key); // Esto navegará a '/my-reservations'
+                  navigate(key);
                 }
               }
             }}
@@ -92,7 +95,7 @@ const Navbar: React.FC = () => {
             icon={<LoginOutlined />}
             onClick={() => navigate('/login')}
           >
-            Iniciar Sesión
+            Iniciar SesiÃ³n
           </Button>
         )}
       </Space>

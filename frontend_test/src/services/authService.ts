@@ -22,6 +22,10 @@ export interface AuthResponse {
       email: string;
       name: string;
       role: 'admin' | 'user';
+      company?: string;
+      businessArea?: string;
+      interests?: string[];
+      bio?: string;
     };
     token: string;
   };

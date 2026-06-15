@@ -16,7 +16,7 @@ import {
 export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> = async (req, res, next) => {
   try {
     const userId = req.user?.userId;
-    
+
     if (!userId) {
       throw createHttpError(401, 'Usuario no autenticado');
     }
@@ -108,18 +108,18 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> =
 export const getEventById: RequestHandler = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    
+
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
 
     const event = await Event.findById(eventId);
-    
+
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
 
-     const serializedEvent = {
+    const serializedEvent = {
       ...event.toObject(),
       _id: event._id.toString(),
       startDateTime: event.startDateTime.toISOString(),
@@ -129,7 +129,7 @@ export const getEventById: RequestHandler = async (req, res, next) => {
       // Si createdBy es ObjectId, también serialízalo
       createdBy: event.createdBy.toString()
     };
-    
+
     res.status(200).json({
       success: true,
       data: serializedEvent
@@ -156,7 +156,7 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
 
     // Buscar evento
     const event = await Event.findById(eventId);
-    
+
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
@@ -225,14 +225,14 @@ export const deleteEvent: RequestHandler = async (req, res, next) => {
 
     // Buscar evento
     const event = await Event.findById(eventId);
-    
+
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
     if (event.status !== 'activo') {
       throw createHttpError(400, 'Solo eventos activos pueden eliminarse');
     }
-   
+
 
     // Verificar que no tenga participantes inscritos
     if (event.currentParticipants > 0) {
@@ -372,3 +372,90 @@ export const getMyEvents: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPublicEvents: RequestHandler<unknown, unknown, unknown, EventsFilter> = async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page || '1');
+    const limit = parseInt(req.query.limit || '6');
+    const skip = (page - 1) * limit;
+
+    const filter: any = { status: 'activo' };
+
+    if (req.query.interestCategory) {
+      filter.interestCategory = req.query.interestCategory;
+    }
+
+    if (req.query.dateFrom || req.query.dateTo) {
+      filter.startDateTime = {};
+
+      if (req.query.dateFrom) {
+        filter.startDateTime.$gte = new Date(req.query.dateFrom);
+      }
+
+      if (req.query.dateTo) {
+        filter.startDateTime.$lte = new Date(req.query.dateTo);
+      }
+    }
+
+    if (req.query.search) {
+      filter.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { description: { $regex: req.query.search, $options: 'i' } },
+        { location: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    const [events, totalEvents] = await Promise.all([
+      Event.find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ startDateTime: 1 }),
+      Event.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.ceil(totalEvents / limit);
+
+    const response: EventsResponse = {
+      success: true,
+      data: events,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalEvents,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPublicEventById: RequestHandler<{ eventId: string }> = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+
+    if (!mongoose.isValidObjectId(eventId)) {
+      throw createHttpError(400, 'ID de evento no válido');
+    }
+
+    const event = await Event.findOne({
+      _id: eventId,
+      status: 'activo'
+    });
+
+    if (!event) {
+      throw createHttpError(404, 'Evento no encontrado o no disponible');
+    }
+
+    res.status(200).json({
+      success: true,
+      data: event
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
