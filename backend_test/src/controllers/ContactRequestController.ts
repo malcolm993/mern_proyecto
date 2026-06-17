@@ -4,7 +4,12 @@ import mongoose from "mongoose";
 import ContactRequest from "../models/contactRequest";
 import User from "../models/user";
 
-const populateUsers = [
+const populateUsersPublic = [
+  { path: 'requester', select: 'name company businessArea interests bio' },
+  { path: 'receiver', select: 'name company businessArea interests bio' }
+];
+
+const populateUsersAccepted = [
   { path: 'requester', select: 'name email company businessArea interests bio' },
   { path: 'receiver', select: 'name email company businessArea interests bio' }
 ];
@@ -45,7 +50,7 @@ export const createContactRequest: RequestHandler = async (req, res, next) => {
       status: 'pending'
     });
 
-    const populated = await contactRequest.populate(populateUsers);
+    const populated = await contactRequest.populate(populateUsersPublic);
 
     res.status(201).json({
       success: true,
@@ -64,13 +69,17 @@ export const getReceivedRequests: RequestHandler = async (req, res, next) => {
       throw createHttpError(401, 'Usuario no autenticado');
     }
 
-    const requests = await ContactRequest.find({ receiver: userId })
-      .populate(populateUsers)
-      .sort({ createdAt: -1 });
+    const requests = await ContactRequest.find({ requester: userId }).sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, data: requests });
+    const populated = await Promise.all(
+      requests.map(req =>
+        req.populate(req.status === 'accepted' ? populateUsersAccepted : populateUsersPublic)
+      )
+    );
+
+    res.status(200).json({ success: true, data: populated });
   } catch (error) {
-    next(error);
+    next(error); 
   }
 };
 
@@ -81,11 +90,15 @@ export const getSentRequests: RequestHandler = async (req, res, next) => {
       throw createHttpError(401, 'Usuario no autenticado');
     }
 
-    const requests = await ContactRequest.find({ requester: userId })
-      .populate(populateUsers)
-      .sort({ createdAt: -1 });
+    const requests = await ContactRequest.find({ receiver: userId }).sort({ createdAt: -1 });
 
-    res.status(200).json({ success: true, data: requests });
+    const populated = await Promise.all(
+      requests.map(req =>
+        req.populate(req.status === 'accepted' ? populateUsersAccepted : populateUsersPublic)
+      )
+    );
+
+    res.status(200).json({ success: true, data: populated });
   } catch (error) {
     next(error);
   }
@@ -100,7 +113,7 @@ const updateRequestStatus = (status: 'accepted' | 'rejected'): RequestHandler<{ 
       throw createHttpError(401, 'Usuario no autenticado');
     }
     if (!mongoose.isValidObjectId(id)) {
-      throw createHttpError(400, 'ID de solicitud no vÃ¡lido');
+      throw createHttpError(400, 'ID de solicitud no valido');
     }
 
     const contactRequest = await ContactRequest.findById(id);
@@ -116,7 +129,7 @@ const updateRequestStatus = (status: 'accepted' | 'rejected'): RequestHandler<{ 
 
     contactRequest.status = status;
     await contactRequest.save();
-    const populated = await contactRequest.populate(populateUsers);
+    const populated = await contactRequest.populate(status === 'accepted' ? populateUsersAccepted : populateUsersPublic);
 
     res.status(200).json({
       success: true,

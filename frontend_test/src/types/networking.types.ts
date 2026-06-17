@@ -1,6 +1,6 @@
 export interface NetworkingUser {
   _id: string;
-  email: string;
+  email?: string;
   name: string;
   role: 'admin' | 'user';
   company?: string;

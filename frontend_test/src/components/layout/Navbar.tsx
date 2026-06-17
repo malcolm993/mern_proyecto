@@ -95,7 +95,7 @@ const Navbar: React.FC = () => {
             icon={<LoginOutlined />}
             onClick={() => navigate('/login')}
           >
-            Iniciar SesiÃ³n
+            Iniciar Sesion
           </Button>
         )}
       </Space>

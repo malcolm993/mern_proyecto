@@ -16,13 +16,14 @@ import {
   Tag,
   Typography
 } from 'antd';
-import { CheckOutlined, CloseOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, MailOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons';
 import { networkingService } from '../../services/networkingService';
 import { ContactRequest, NetworkingUser } from '../../types/networking.types';
 
 const { Title, Text, Paragraph } = Typography;
 
-const renderUserSummary = (user: NetworkingUser) => (
+// showEmail solo es true cuando status === 'accepted'
+const renderUserSummary = (user: NetworkingUser, showEmail = false) => (
   <Space direction="vertical" size={2}>
     <Text strong>{user.name}</Text>
     <Text type="secondary">{user.company || 'Sin empresa cargada'}</Text>
@@ -35,8 +36,27 @@ const renderUserSummary = (user: NetworkingUser) => (
         ))}
       </Space>
     )}
+    {/* Email visible solo cuando la solicitud fue aceptada */}
+    {showEmail && user.email && (
+      <Space>
+        <MailOutlined style={{ color: '#1890ff' }} />
+        <Text copyable style={{ color: '#1890ff' }}>
+          {user.email}
+        </Text>
+      </Space>
+    )}
   </Space>
 );
+
+const getStatusTag = (status: ContactRequest['status']) => {
+  const config = {
+    pending:  { color: 'gold',    label: 'Pendiente' },
+    accepted: { color: 'green',   label: 'Aceptada'  },
+    rejected: { color: 'red',     label: 'Rechazada' },
+  };
+  const { color, label } = config[status];
+  return <Tag color={color}>{label}</Tag>;
+};
 
 const NetworkingPage: React.FC = () => {
   const [suggestions, setSuggestions] = useState<NetworkingUser[]>([]);
@@ -73,7 +93,6 @@ const NetworkingPage: React.FC = () => {
 
   const handleSendRequest = async () => {
     if (!selectedUser) return;
-
     setSubmitting(true);
     try {
       await networkingService.createContactRequest(selectedUser._id, contactMessage);
@@ -116,7 +135,7 @@ const NetworkingPage: React.FC = () => {
       <Title level={1}>
         <TeamOutlined /> Networking
       </Title>
-      <Text type="secondary">Conecta con participantes con intereses o rubro en comÃºn.</Text>
+      <Text type="secondary">Conecta con participantes con intereses o rubro en común.</Text>
 
       {error && <Alert message="Error" description={error} type="error" showIcon style={{ marginTop: 24 }} />}
 
@@ -145,7 +164,8 @@ const NetworkingPage: React.FC = () => {
                         </Button>
                       ]}
                     >
-                      {renderUserSummary(participant)}
+                      {/* En sugerencias nunca se muestra el email */}
+                      {renderUserSummary(participant, false)}
                     </Card>
                   </Col>
                 ))}
@@ -161,20 +181,35 @@ const NetworkingPage: React.FC = () => {
                 dataSource={receivedRequests}
                 renderItem={(request) => (
                   <List.Item
-                    actions={request.status === 'pending' ? [
-                      <Button key="accept" type="primary" icon={<CheckOutlined />} onClick={() => handleRespond(request._id, 'accept')}>
-                        Aceptar
-                      </Button>,
-                      <Button key="reject" danger icon={<CloseOutlined />} onClick={() => handleRespond(request._id, 'reject')}>
-                        Rechazar
-                      </Button>
-                    ] : [<Tag key="status">{request.status}</Tag>]}
+                    actions={
+                      request.status === 'pending'
+                        ? [
+                            <Button
+                              key="accept"
+                              type="primary"
+                              icon={<CheckOutlined />}
+                              onClick={() => handleRespond(request._id, 'accept')}
+                            >
+                              Aceptar
+                            </Button>,
+                            <Button
+                              key="reject"
+                              danger
+                              icon={<CloseOutlined />}
+                              onClick={() => handleRespond(request._id, 'reject')}
+                            >
+                              Rechazar
+                            </Button>
+                          ]
+                        : [getStatusTag(request.status)]
+                    }
                   >
                     <List.Item.Meta
                       title={request.requester.name}
                       description={
                         <Space direction="vertical">
-                          {renderUserSummary(request.requester)}
+                          {/* Email del requester visible solo si aceptaste la solicitud */}
+                          {renderUserSummary(request.requester, request.status === 'accepted')}
                           {request.message && <Text>Mensaje: {request.message}</Text>}
                         </Space>
                       }
@@ -192,12 +227,13 @@ const NetworkingPage: React.FC = () => {
                 locale={{ emptyText: 'No tienes solicitudes enviadas' }}
                 dataSource={sentRequests}
                 renderItem={(request) => (
-                  <List.Item actions={[<Tag key="status">{request.status}</Tag>]}>
+                  <List.Item actions={[getStatusTag(request.status)]}>
                     <List.Item.Meta
                       title={request.receiver.name}
                       description={
                         <Space direction="vertical">
-                          {renderUserSummary(request.receiver)}
+                          {/* Email del receiver visible solo si aceptó la solicitud */}
+                          {renderUserSummary(request.receiver, request.status === 'accepted')}
                           {request.message && <Text>Mensaje: {request.message}</Text>}
                         </Space>
                       }
