@@ -60,3 +60,13 @@ export interface EventsResponse {
     hasPrevPage: boolean;
   };
 }
+export interface UpdateEventRequest {
+  title?: string;
+  description?: string;
+  location?: string;
+  startDateTime?: string;  // string para HTTP
+  endDateTime?: string;    // string para HTTP
+  maxParticipants?: number;
+  interestCategory?: Event['interestCategory'];
+  status?: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
+}

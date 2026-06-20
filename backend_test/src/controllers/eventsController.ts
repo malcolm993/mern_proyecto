@@ -164,7 +164,7 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
     if (event.createdBy.toString() !== userId) {
       throw createHttpError(403, 'Solo el organizador que creó el evento puede editarlo');
     }
-    
+
     if (event.status !== 'activo') {
       throw createHttpError(400, 'Solo eventos activos pueden editarse');
     }
@@ -175,15 +175,19 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
 
     // Validar fechas si se actualizan
     if (updateData.startDateTime || updateData.endDateTime) {
-      const startDate = updateData.startDateTime ? new Date(updateData.startDateTime) : event.startDateTime;
-      const endDate = updateData.endDateTime ? new Date(updateData.endDateTime) : event.endDateTime;
+      const startDate = new Date(
+        updateData.startDateTime ?? event.startDateTime
+      );
+      const endDate = new Date(
+        updateData.endDateTime ?? event.endDateTime
+      );
       const now = new Date();
 
       if (startDate <= now) {
         throw createHttpError(400, 'La fecha de inicio debe ser futura');
       }
 
-      if (endDate <= startDate) {
+      if (endDate.getTime() <= startDate.getTime()) {
         throw createHttpError(400, 'La fecha de fin debe ser posterior al inicio');
       }
     }
@@ -197,7 +201,7 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true, runValidators: false }
     );
 
     res.status(200).json({

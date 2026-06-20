@@ -1,6 +1,6 @@
 // src/services/eventService.ts
 import { api } from './api';
-import { Event, EventsResponse, EventsFilter, CreateEventRequest, EventResponse } from '../types/event.types';
+import { Event, EventsResponse, EventsFilter, CreateEventRequest, EventResponse, UpdateEventRequest } from '../types/event.types';
 
 export const eventService = {
   // Obtener todos los eventos
@@ -22,7 +22,7 @@ export const eventService = {
   },
 
   // Actualizar evento (solo admin creador)
-  updateEvent: async (id: string, eventData: Partial<Event>): Promise<Event> => {
+  updateEvent: async (id: string, eventData: UpdateEventRequest): Promise<Event> => {
     const response = await api.patch<Event>(`/events/${id}`, eventData);
     return response.data;
   },
