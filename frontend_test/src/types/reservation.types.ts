@@ -37,3 +37,28 @@ export interface ReservationStats {
   cancelled: number;
   completed: number;
 }
+
+export interface EventReservationsResponse {
+  success: boolean;
+  data: {
+    event: {
+      _id: string;
+      title: string;
+      startDateTime: string;
+      maxParticipants: number;
+      currentParticipants: number;
+    };
+    reservations: Array<{
+      reservationId: string;
+      status: 'active' | 'cancelled' | 'completed';
+      registeredAt: string;
+      participant: {
+        _id: string;
+        name: string;
+        email: string;
+        company?: string;
+        businessArea?: string;
+      };
+    }>;
+  };
+}

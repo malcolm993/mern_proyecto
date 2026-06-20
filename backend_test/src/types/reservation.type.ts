@@ -60,3 +60,30 @@ export interface PopulatedReservation {
     status: string;
   };
 }
+
+export interface EventReservationItem {
+  reservationId: string;
+  status: 'active' | 'cancelled' | 'completed';
+  registeredAt: string;
+  participant: {
+    _id: string;
+    name: string;
+    email: string;
+    company?: string;
+    businessArea?: string;
+  };
+}
+
+export interface EventReservationsResponse {
+  success: boolean;
+  data: {
+    event: {
+      _id: string;
+      title: string;
+      startDateTime: string;
+      maxParticipants: number;
+      currentParticipants: number;
+    };
+    reservations: EventReservationItem[];
+  };
+}

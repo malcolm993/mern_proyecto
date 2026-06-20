@@ -48,8 +48,8 @@ const ProfilePage: React.FC = () => {
   if (!user) {
     return (
       <div style={{ textAlign: 'center', padding: '50px 20px' }}>
-        <Title level={2}>Debes iniciar sesiÃ³n</Title>
-        <Text type="secondary">Por favor inicia sesiÃ³n para ver tu perfil</Text>
+        <Title level={2}>Debes iniciar sesión</Title>
+        <Text type="secondary">Por favor inicia sesión para ver tu perfil</Text>
       </div>
     );
   }
@@ -61,24 +61,24 @@ const ProfilePage: React.FC = () => {
 
   const roleInfo = roleLabels[user.role] || roleLabels.user;
 
-  const handleSaveProfile = async (values: {
-    name: string;
-    company?: string;
-    businessArea?: string;
-    interests?: string[];
-    bio?: string;
-  }) => {
-    setSaving(true);
-    try {
-      const updatedUser = await profileService.updateProfile(values);
-      updateUser(updatedUser);
-      message.success('Perfil actualizado');
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : 'Error al actualizar perfil');
-    } finally {
-      setSaving(false);
-    }
-  };
+ const handleSaveProfile = async (values: {
+  name: string;
+  company?: string;
+  businessArea?: string;
+  interests?: string[];
+  bio?: string;
+}) => {
+  setSaving(true);
+  try {
+    const updatedUser = await profileService.updateProfile(values);
+    updateUser(updatedUser);
+    message.success('Perfil actualizado');
+  } catch (error) {
+    message.error(error instanceof Error ? error.message : 'Error al actualizar perfil');
+  } finally {
+    setSaving(false);
+  }
+};
 
   return (
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -86,7 +86,7 @@ const ProfilePage: React.FC = () => {
         <Title level={1}>
           <UserOutlined /> Mi Perfil
         </Title>
-        <Text type="secondary">InformaciÃ³n de cuenta y datos de networking</Text>
+        <Text type="secondary">Información de cuenta y datos de networking</Text>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -158,7 +158,7 @@ const ProfilePage: React.FC = () => {
                     </Form.Item>
                   </Col>
                   <Col xs={24}>
-                    <Form.Item name="bio" label="DescripciÃ³n breve">
+                    <Form.Item name="bio" label="Descripción breve">
                       <Input.TextArea rows={3} maxLength={300} showCount />
                     </Form.Item>
                   </Col>
@@ -193,7 +193,7 @@ const ProfilePage: React.FC = () => {
           <Card title="Networking">
             <Space direction="vertical" style={{ width: '100%' }}>
               <Paragraph type="secondary">
-                CompletÃ¡ empresa, rubro e intereses para recibir sugerencias de participantes afines.
+                Completá empresa, rubro e intereses para recibir sugerencias de participantes afines.
               </Paragraph>
               <Button block icon={<TeamOutlined />} href="/networking">
                 Ver sugerencias
@@ -216,7 +216,7 @@ const ProfilePage: React.FC = () => {
               )}
               <Divider style={{ margin: '16px 0' }} />
               <Button block danger onClick={logout}>
-                Cerrar SesiÃ³n
+                Cerrar Sesión
               </Button>
             </Space>
           </Card>

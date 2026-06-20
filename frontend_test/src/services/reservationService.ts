@@ -1,9 +1,10 @@
-// src/services/reservationService.ts - CORREGIDO
+// src/services/reservationService.ts 
 import { api } from './api';
 import { 
   Reservation, 
   ReservationWithEvent, 
-  ReservationStats 
+  ReservationStats,
+  EventReservationsResponse,
 } from '../types/reservation.types';
 
 // Interfaz para la respuesta de creación
@@ -74,5 +75,15 @@ export const reservationService = {
     } catch {
       return false;
     }
+  },
+  getEventReservations: async (eventId: string) => {
+  const response = await api.get<EventReservationsResponse>(
+    `/reservation/event/${eventId}`
+  );
+  if (!response.data.success) {
+    throw new Error('Error al obtener inscriptos del evento');
   }
+  return response.data.data;
+},
+  
 };

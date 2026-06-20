@@ -8,6 +8,8 @@ import LoginPage from './modules/auth/LoginPage';
 import RegisterPage from './modules/auth/RegisterPage';
 import MyReservationPage from './modules/reservations/MyReservationPage';
 import CreateEventPage from './modules/events/CreateEventPage';
+import EditEventPage from './modules/events/EditEventPage';
+import MyEventsPage from './modules/events/MyEventsPage';
 import ProfilePage from './modules/profiles/ProfilePage';
 import NetworkingPage from './modules/networking/NetworkingPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -45,6 +47,24 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['admin']}>
             <CreateEventPage />
           </ProtectedRoute>} />
+
+         <Route path="/events/create" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <CreateEventPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/events/edit/:eventId" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <EditEventPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/my-events" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <MyEventsPage />
+          </ProtectedRoute>
+        } />  
 
         <Route path="*" element={<NotFound />} />
       </Route>

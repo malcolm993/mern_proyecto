@@ -1,7 +1,7 @@
 // backend/src/routes/reservations.ts
 import express from 'express';
 import * as ReservationController from '../controllers/ReservationController';
-import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, requireRole } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -9,14 +9,20 @@ const router = express.Router();
 router.use(authenticateToken);
 
 // Crear nueva reserva
-router.post('/', ReservationController.createReservation);
+router.post('/',requireRole('user'), ReservationController.createReservation);
 
 // Cancelar reserva
-router.delete('/:reservationId', ReservationController.cancelReservation);
+router.delete('/:reservationId', requireRole('user'), ReservationController.cancelReservation);
 
 // Obtener reservas del usuario actual
-router.get('/my-reservations', ReservationController.getUserReservations);
+router.get('/my-reservations',requireRole('user'), ReservationController.getUserReservations);
 
 router.get('/stats', requireAdmin , ReservationController.getReservationStats);
+
+// Listado de inscriptos de un evento (solo organizador creador)
+router.get('/event/:eventId', requireAdmin, ReservationController.getEventReservations);
+
+// Exportación CSV del listado de inscriptos (solo organizador creador)
+router.get('/event/:eventId/export', requireAdmin, ReservationController.exportEventReservationsCSV);
 
 export default router;

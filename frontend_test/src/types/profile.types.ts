@@ -13,3 +13,14 @@ export interface ProfileStats {
   activeReservations: number;
   createdEvents?: number; // Solo para admin/organizador
 }
+
+export interface ProfileUser {
+  _id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+  company?: string;
+  businessArea?: string;
+  interests?: string[];
+  bio?: string;
+}

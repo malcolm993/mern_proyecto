@@ -7,7 +7,8 @@ import {
   LoginOutlined,
   LogoutOutlined,
   BookOutlined,
-  TeamOutlined
+  TeamOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/authContext';
@@ -22,25 +23,44 @@ const Navbar: React.FC = () => {
     navigate('/');
   };
 
-  const userMenuItems = [
-    {
-      key: '/my-reservations',
-      icon: <BookOutlined />,
-      label: 'Mis Reservas',
-    },
-    {
-      key: '/profile',
-      icon: <UserOutlined />,
-      label: 'Mi Perfil',
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Cerrar SesiÃ³n',
-      onClick: handleLogout,
-    },
-  ];
+  // Items del dropdown de usuario según rol
+  const userMenuItems = user?.role === 'admin'
+    ? [
+        {
+          key: '/my-events',
+          icon: <AppstoreOutlined />,
+          label: 'Mis Eventos',
+        },
+        {
+          key: '/profile',
+          icon: <UserOutlined />,
+          label: 'Mi Perfil',
+        },
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          label: 'Cerrar Sesión',
+        },
+      ]
+    : [
+        {
+          key: '/my-reservations',
+          icon: <BookOutlined />,
+          label: 'Mis Reservas',
+        },
+        {
+          key: '/profile',
+          icon: <UserOutlined />,
+          label: 'Mi Perfil',
+        },
+        {
+          key: 'logout',
+          icon: <LogoutOutlined />,
+          label: 'Cerrar Sesión',
+        },
+      ];
 
+  // Items del menú principal según rol
   const baseMenuItems = [
     {
       key: '/',
@@ -52,11 +72,18 @@ const Navbar: React.FC = () => {
       icon: <CalendarOutlined />,
       label: 'Eventos',
     },
-    {
+    // Networking solo visible para participantes (role: 'user')
+    ...(user?.role !== 'admin' ? [{
       key: '/networking',
       icon: <TeamOutlined />,
       label: 'Networking',
-    },
+    }] : []),
+    // Crear evento solo visible para admins
+    ...(user?.role === 'admin' ? [{
+      key: '/events/create',
+      icon: <CalendarOutlined />,
+      label: 'Crear Evento',
+    }] : []),
   ];
 
   return (
@@ -95,7 +122,7 @@ const Navbar: React.FC = () => {
             icon={<LoginOutlined />}
             onClick={() => navigate('/login')}
           >
-            Iniciar Sesion
+            Iniciar Sesión
           </Button>
         )}
       </Space>

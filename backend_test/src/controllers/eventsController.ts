@@ -160,6 +160,11 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
+
+    if (event.createdBy.toString() !== userId) {
+      throw createHttpError(403, 'Solo el organizador que creó el evento puede editarlo');
+    }
+    
     if (event.status !== 'activo') {
       throw createHttpError(400, 'Solo eventos activos pueden editarse');
     }
@@ -233,6 +238,10 @@ export const deleteEvent: RequestHandler = async (req, res, next) => {
       throw createHttpError(400, 'Solo eventos activos pueden eliminarse');
     }
 
+    // Verificar que el usuario sea el organizador del evento
+    if (event.createdBy.toString() !== userId) {
+      throw createHttpError(403, 'Solo el organizador que creó el evento puede eliminarlo');
+    }
 
     // Verificar que no tenga participantes inscritos
     if (event.currentParticipants > 0) {

@@ -4,7 +4,7 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import Reservation from "../models/reservation";
 import Event from "../models/event";
-import { CreateReservationRequest, ReservationResponse, UserReservationsResponse } from "../types/reservation.type";
+import { CreateReservationRequest, ReservationResponse, UserReservationsResponse,EventReservationsResponse } from "../types/reservation.type";
 
 // Crear nueva reserva
 export const createReservation: RequestHandler<unknown, unknown, CreateReservationRequest> = async (req, res, next) => {
@@ -261,6 +261,131 @@ export const getReservationStats: RequestHandler = async (req, res, next) => {
         total: activeCount + cancelledCount + completedCount
       }
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getEventReservations: RequestHandler<{ eventId: string }> = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw createHttpError(401, 'Usuario no autenticado');
+    }
+
+    if (!mongoose.isValidObjectId(eventId)) {
+      throw createHttpError(400, 'ID de evento no válido');
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      throw createHttpError(404, 'Evento no encontrado');
+    }
+
+    // Solo el organizador que creó el evento puede ver el listado
+    if (event.createdBy.toString() !== userId) {
+      throw createHttpError(403, 'No tienes permiso para ver los inscriptos de este evento');
+    }
+
+    const reservations = await Reservation.find({ event: eventId })
+      .populate('user', 'name email company businessArea')
+      .sort({ createdAt: 1 });
+
+    const response: EventReservationsResponse = {
+      success: true,
+      data: {
+        event: {
+          _id: event._id.toString(),
+          title: event.title,
+          startDateTime: event.startDateTime.toISOString(),
+          maxParticipants: event.maxParticipants,
+          currentParticipants: event.currentParticipants
+        },
+        reservations: reservations.map((reservation) => {
+          const participant = reservation.user as any;
+          return {
+            reservationId: reservation._id.toString(),
+            status: reservation.status,
+            registeredAt: reservation.createdAt.toISOString(),
+            participant: {
+              _id: participant._id.toString(),
+              name: participant.name || '',
+              email: participant.email || '',
+              company: participant.company || undefined,
+              businessArea: participant.businessArea || undefined
+            }
+          };
+        })
+      }
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Exportar listado de inscriptos como CSV (solo el organizador que creó el evento)
+export const exportEventReservationsCSV: RequestHandler<{ eventId: string }> = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw createHttpError(401, 'Usuario no autenticado');
+    }
+
+    if (!mongoose.isValidObjectId(eventId)) {
+      throw createHttpError(400, 'ID de evento no válido');
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) {
+      throw createHttpError(404, 'Evento no encontrado');
+    }
+
+    if (event.createdBy.toString() !== userId) {
+      throw createHttpError(403, 'No tienes permiso para exportar los inscriptos de este evento');
+    }
+
+    const reservations = await Reservation.find({ event: eventId, status: 'active' })
+      .populate('user', 'name email company businessArea')
+      .sort({ createdAt: 1 });
+
+    // Construcción manual del CSV (sin librerías externas)
+    const headers = ['Nombre', 'Email', 'Empresa', 'Rubro', 'Fecha de inscripcion'];
+
+    const escapeCsvField = (value: string): string => {
+      const stringValue = value ?? '';
+      // Si contiene coma, comillas o salto de línea, se envuelve en comillas dobles
+      if (/[",\n]/.test(stringValue)) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+
+    const rows = reservations.map((reservation) => {
+      const participant = reservation.user as any;
+      return [
+        escapeCsvField(participant.name || ''),
+        escapeCsvField(participant.email || ''),
+        escapeCsvField(participant.company || ''),
+        escapeCsvField(participant.businessArea || ''),
+        escapeCsvField(reservation.createdAt.toISOString())
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+
+    // BOM UTF-8 para que Excel interprete correctamente acentos y ñ
+    const bom = '\uFEFF';
+    const fileName = `inscriptos_${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.status(200).send(bom + csvContent);
   } catch (error) {
     next(error);
   }
