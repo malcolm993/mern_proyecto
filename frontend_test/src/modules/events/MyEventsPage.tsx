@@ -21,6 +21,7 @@ import {
   DownloadOutlined,
   EditOutlined,
   PlusOutlined,
+  ScheduleOutlined,
   TeamOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -215,6 +216,16 @@ const MyEventsPage: React.FC = () => {
                         onClick={() => handleDelete(event)}
                       >
                         Eliminar
+                      </Button>
+                    </Tooltip>,
+                    // Dentro del map de events, en el array actions de Card:
+                    <Tooltip key="agenda" title="Agregar o editar actividades de agenda">
+                      <Button
+                        type="link"
+                        icon={<ScheduleOutlined />}
+                        onClick={() => navigate(`/events/${event._id}/agenda/manage`)}
+                      >
+                        Agenda
                       </Button>
                     </Tooltip>
                   ]}

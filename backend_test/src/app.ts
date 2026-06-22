@@ -24,7 +24,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoute)
 
-app.use("/api/reservation", reservationRoute)
+app.use("/api/reservations", reservationRoute)
 
 app.use("/api/events", eventsRoute);
 

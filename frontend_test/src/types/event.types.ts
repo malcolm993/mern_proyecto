@@ -70,3 +70,16 @@ export interface UpdateEventRequest {
   interestCategory?: Event['interestCategory'];
   status?: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
 }
+
+export interface AgendaItem {
+  _id: string;
+  event: string;
+  title: string;
+  description?: string;
+  speaker?: string;
+  startTime: string;
+  endTime: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}

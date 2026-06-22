@@ -1,5 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+
 export interface AgendaItem extends Document {
   event: Types.ObjectId;
   title: string;

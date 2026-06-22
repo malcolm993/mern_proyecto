@@ -6,7 +6,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Event } from '../../types/event.types';
 import { eventService } from '../../services/eventService';
 import EventDetailCard from '../../components/events/EventDetailCard';
-import { AgendaItem } from '../../types/networking.types';
+import { AgendaItem } from '../../types/event.types';
 import { agendaService } from '../../services/agendaService';
 
 

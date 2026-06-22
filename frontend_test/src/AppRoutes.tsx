@@ -14,6 +14,7 @@ import ProfilePage from './modules/profiles/ProfilePage';
 import NetworkingPage from './modules/networking/NetworkingPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import UnauthorizedPage from './modules/auth/UnauthorizedPage';
+import ManageAgendaPage from './modules/events/ManageAgendaPage';
 import { NotFound } from './modules/notFound';
 
 function AppRoutes() {
@@ -48,7 +49,7 @@ function AppRoutes() {
             <CreateEventPage />
           </ProtectedRoute>} />
 
-         <Route path="/events/create" element={
+        <Route path="/events/create" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <CreateEventPage />
           </ProtectedRoute>
@@ -64,7 +65,12 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={['admin']}>
             <MyEventsPage />
           </ProtectedRoute>
-        } />  
+        } />
+        <Route path="/events/:eventId/agenda/manage" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ManageAgendaPage />
+          </ProtectedRoute>
+        } />
 
         <Route path="*" element={<NotFound />} />
       </Route>

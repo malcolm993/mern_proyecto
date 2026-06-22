@@ -17,8 +17,11 @@ export const eventService = {
 
   // Crear evento (solo admin)
   createEvent: async (eventData: CreateEventRequest): Promise<Event> => {
-    const response = await api.post<Event>('/events', eventData);
-    return response.data;
+    const response = await api.post<{ success: boolean; message: string; data: Event }>(
+      '/events',
+      eventData
+    );
+    return response.data.data;  // ← extraer el evento del wrapper
   },
 
   // Actualizar evento (solo admin creador)
@@ -59,7 +62,7 @@ export const eventService = {
     // El backend valida el token y verifica que sea el creador del evento
     const token = localStorage.getItem('token');
     const url = `${import.meta.env.VITE_API_URL}/reservations/event/${eventId}/export?token=${token}`;
-    
+
     // Crear un link temporal y hacer click para descargar el archivo
     const link = document.createElement('a');
     link.href = url;

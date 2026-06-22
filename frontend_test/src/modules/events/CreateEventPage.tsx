@@ -50,8 +50,7 @@ const CreateEventPage: React.FC = () => {
   const onFinish = async (values: EventFormValues) => {
     try {
       setLoading(true);
-      
-      // Formatear fechas
+
       const eventData: CreateEventRequest = {
         title: values.title,
         description: values.description,
@@ -62,10 +61,14 @@ const CreateEventPage: React.FC = () => {
         interestCategory: values.interestCategory
       };
 
-      await eventService.createEvent(eventData);
-      
-      message.success('Evento creado exitosamente');
-      navigate('/events');
+      // ✅ Guardar el evento creado para obtener su _id
+      const createdEvent = await eventService.createEvent(eventData);
+
+      message.success('Evento creado exitosamente. Ahora podés agregar la agenda.');
+
+      // ✅ Redirigir a gestión de agenda en lugar de /events
+      navigate(`/events/${createdEvent._id}/agenda/manage`);
+
     } catch (error: unknown) {
       if (error instanceof Error) {
         message.error(error.message || 'Error al crear evento');
@@ -79,21 +82,21 @@ const CreateEventPage: React.FC = () => {
 
   const validateEndDate: RuleObject['validator'] = (
     _rule: RuleObject,
-    value?: [Dayjs , Dayjs]
+    value?: [Dayjs, Dayjs]
   ) => {
     if (!value || value.length !== 2) {
       return Promise.reject('Selecciona fecha de inicio y fin');
     }
-    
+
     const [start, end] = value;
     if (start.isBefore(dayjs(), 'minute')) {
       return Promise.reject('La fecha de inicio debe ser futura');
     }
-    
+
     if (end.isBefore(start, 'minute')) {
       return Promise.reject('La fecha de fin debe ser posterior al inicio');
     }
-    
+
     return Promise.resolve();
   };
 
@@ -103,7 +106,7 @@ const CreateEventPage: React.FC = () => {
         <Title level={2} style={{ marginBottom: 24, textAlign: 'center' }}>
           <CalendarOutlined /> Crear Nuevo Evento
         </Title>
-        
+
         <Text type="secondary" style={{ display: 'block', textAlign: 'center', marginBottom: 32 }}>
           Completa todos los campos para crear tu evento
         </Text>
@@ -128,8 +131,8 @@ const CreateEventPage: React.FC = () => {
                   { max: 100, message: 'Máximo 100 caracteres' }
                 ]}
               >
-                <Input 
-                  placeholder="Ej: Taller de React Avanzado" 
+                <Input
+                  placeholder="Ej: Taller de React Avanzado"
                   size="large"
                 />
               </Form.Item>
@@ -145,7 +148,7 @@ const CreateEventPage: React.FC = () => {
                   { max: 1000, message: 'Máximo 1000 caracteres' }
                 ]}
               >
-                <TextArea 
+                <TextArea
                   rows={4}
                   placeholder="Describe tu evento detalladamente..."
                   showCount
@@ -166,8 +169,8 @@ const CreateEventPage: React.FC = () => {
                 }
                 rules={[{ required: true, message: 'Ingresa una ubicación' }]}
               >
-                <Input 
-                  placeholder="Ej: Av. Principal 123, Sala de Conferencias" 
+                <Input
+                  placeholder="Ej: Av. Principal 123, Sala de Conferencias"
                   size="large"
                 />
               </Form.Item>
@@ -250,7 +253,7 @@ const CreateEventPage: React.FC = () => {
               >
                 Cancelar
               </Button>
-              
+
               <Button
                 type="primary"
                 htmlType="submit"

@@ -19,15 +19,3 @@ export interface ContactRequest {
   updatedAt: string;
 }
 
-export interface AgendaItem {
-  _id: string;
-  event: string;
-  title: string;
-  description?: string;
-  speaker?: string;
-  startTime: string;
-  endTime: string;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
