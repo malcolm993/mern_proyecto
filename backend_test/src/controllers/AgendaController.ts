@@ -3,6 +3,7 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import AgendaItem from "../models/agendaItem";
 import Event from "../models/event";
+import { updateEventStatuses } from "../services/eventStatusService";
 
 export const getEventAgenda: RequestHandler<{ eventId: string }> = async (req, res, next) => {
   try {
@@ -33,7 +34,7 @@ export const createAgendaItem: RequestHandler<{ eventId: string }> = async (req,
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no vÃ¡lido');
     }
-
+    await updateEventStatuses();
     const event = await Event.findById(eventId);
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
@@ -60,7 +61,7 @@ export const createAgendaItem: RequestHandler<{ eventId: string }> = async (req,
       throw createHttpError(400, 'La hora de fin debe ser posterior a la hora de inicio');
     }
 
-    if (startTime < event.startDateTime || endTime > event.endDateTime) {
+    if (start < event.startDateTime || end > event.endDateTime) {
       throw createHttpError(400,
         `Las actividades deben estar dentro del horario del evento 
     (${event.startDateTime.toISOString()} - ${event.endDateTime.toISOString()})`
@@ -103,8 +104,7 @@ export const updateAgendaItem: RequestHandler<{ agendaItemId: string }> = async 
     if (!agendaItem) {
       throw createHttpError(404, 'Actividad de agenda no encontrada');
     }
-
-    // ✅ NUEVO: buscar el evento para verificar que el admin sea el creador
+    await updateEventStatuses();
     const event = await Event.findById(agendaItem.event);
     if (!event) {
       throw createHttpError(404, 'Evento asociado no encontrado');
@@ -128,7 +128,7 @@ export const updateAgendaItem: RequestHandler<{ agendaItemId: string }> = async 
     }
 
 
-    if (updateData.startTime < event.startDateTime || updateData.endTime > event.endDateTime) {
+    if (start < event.startDateTime || end > event.endDateTime) {
       throw createHttpError(400,
         `Las actividades deben estar dentro del horario del evento 
         (${event.startDateTime.toISOString()} - ${event.endDateTime.toISOString()})`
@@ -151,30 +151,36 @@ export const updateAgendaItem: RequestHandler<{ agendaItemId: string }> = async 
   }
 };
 
-
 export const deleteAgendaItem: RequestHandler<{ agendaItemId: string }> = async (req, res, next) => {
   try {
     const { agendaItemId } = req.params;
     const userId = req.user?.userId;
 
-    if (!mongoose.isValidObjectId(agendaItemId)) {
-      throw createHttpError(400, 'ID de agenda no vÃ¡lido');
+    if (!userId) {
+      throw createHttpError(401, 'Usuario no autenticado');
     }
 
+    if (!mongoose.isValidObjectId(agendaItemId)) {
+      throw createHttpError(400, 'ID de agenda no válido');
+    }
 
-    const agendaItem = await AgendaItem.findByIdAndDelete(agendaItemId);
+    const agendaItem = await AgendaItem.findById(agendaItemId);
+
     if (!agendaItem) {
       throw createHttpError(404, 'Actividad de agenda no encontrada');
     }
 
     const event = await Event.findById(agendaItem.event);
+
     if (!event) {
       throw createHttpError(404, 'Evento asociado no encontrado');
     }
+
     if (event.createdBy.toString() !== userId) {
       throw createHttpError(403, 'Solo el organizador que creó el evento puede eliminar su agenda');
     }
 
+    await AgendaItem.findByIdAndDelete(agendaItemId);
 
     res.status(200).json({
       success: true,
@@ -184,7 +190,6 @@ export const deleteAgendaItem: RequestHandler<{ agendaItemId: string }> = async 
     next(error);
   }
 };
-
 export const getPublicEventAgenda: RequestHandler<{ eventId: string }> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
@@ -192,11 +197,13 @@ export const getPublicEventAgenda: RequestHandler<{ eventId: string }> = async (
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no valido');
     }
+    await updateEventStatuses();
 
-    const event = await Event.findOne({ _id: eventId, status: 'activo' });
+    const event = await Event.findOne({ _id: eventId, status: 'activo', startDateTime:{ $gte: new Date() } });
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado o no disponible');
     }
+    
 
     const agenda = await AgendaItem.find({ event: eventId }).sort({ order: 1, startTime: 1 });
 

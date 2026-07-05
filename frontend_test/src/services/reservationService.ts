@@ -34,7 +34,7 @@ interface MyReservationsResponse {
 export const reservationService = {
   // Crear nueva reserva - CORREGIDO
   createReservation: async (eventId: string): Promise<Reservation> => {
-    const response = await api.post<CreateReservationResponse>('/reservation', { eventId }); // 
+    const response = await api.post<CreateReservationResponse>('/reservations', { eventId }); // 
     if (!response.data.success) {
       throw new Error(response.data.error || 'Error al crear reserva');
     }
@@ -43,7 +43,7 @@ export const reservationService = {
 
   // Obtener reservas del usuario actual - CORREGIDO
   getMyReservations: async (): Promise<ReservationWithEvent[]> => {
-    const response = await api.get<MyReservationsResponse>('/reservation/my-reservations');
+    const response = await api.get<MyReservationsResponse>('/reservations/my-reservations');
     if (!response.data.success) {
       throw new Error(response.data.error || 'Error al obtener reservas');
     }
@@ -52,7 +52,7 @@ export const reservationService = {
 
   // Cancelar reserva - CORREGIDO
   cancelReservation: async (reservationId: string): Promise<void> => {
-    const response = await api.delete(`/reservation/${reservationId}`);
+    const response = await api.delete(`/reservations/${reservationId}`);
     if (!response.data.success) {
       throw new Error(response.data.error || 'Error al cancelar reserva');
     }
@@ -60,7 +60,7 @@ export const reservationService = {
 
   // Obtener estadísticas
   getStats: async (): Promise<ReservationStats> => {
-    const response = await api.get<{ success: boolean; data: ReservationStats }>('/reservation/stats');
+    const response = await api.get<{ success: boolean; data: ReservationStats }>('/reservations/stats');
     if (!response.data.success) {
       throw new Error('Error al obtener estadísticas');
     }
@@ -78,7 +78,7 @@ export const reservationService = {
   },
   getEventReservations: async (eventId: string) => {
   const response = await api.get<EventReservationsResponse>(
-    `/reservation/event/${eventId}`
+    `/reservations/event/${eventId}`
   );
   if (!response.data.success) {
     throw new Error('Error al obtener inscriptos del evento');

@@ -49,12 +49,6 @@ function AppRoutes() {
             <CreateEventPage />
           </ProtectedRoute>} />
 
-        <Route path="/events/create" element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <CreateEventPage />
-          </ProtectedRoute>
-        } />
-
         <Route path="/events/edit/:eventId" element={
           <ProtectedRoute allowedRoles={['admin']}>
             <EditEventPage />

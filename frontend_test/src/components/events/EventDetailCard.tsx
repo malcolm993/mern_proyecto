@@ -10,7 +10,7 @@ import {
   ScheduleOutlined
 } from '@ant-design/icons';
 import { Event } from '../../types/event.types';
-import { AgendaItem } from '../../types/networking.types';
+import { AgendaItem } from '../../types/event.types';
 import ReservationButton from '../reservations/ReservationButton';
 
 const { Title, Text, Paragraph } = Typography;

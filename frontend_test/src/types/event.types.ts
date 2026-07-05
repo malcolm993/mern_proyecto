@@ -68,7 +68,8 @@ export interface UpdateEventRequest {
   endDateTime?: string;    // string para HTTP
   maxParticipants?: number;
   interestCategory?: Event['interestCategory'];
-  status?: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
+  //se comenta el status para que no se pueda actualizar directamente desde el front, solo desde el backend
+  //status?: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
 }
 
 export interface AgendaItem {

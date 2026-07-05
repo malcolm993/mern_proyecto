@@ -17,6 +17,7 @@ import {
 } from 'antd';
 import {
   CalendarOutlined,
+  CloseCircleOutlined,
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
@@ -43,6 +44,7 @@ const MyEventsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const loadMyEvents = async () => {
     try {
@@ -93,6 +95,43 @@ const MyEventsPage: React.FC = () => {
           message.error(err instanceof Error ? err.message : 'Error al eliminar evento');
         } finally {
           setDeletingId(null);
+        }
+      }
+    });
+  };
+
+  const handleCancelEvent = (event: Event) => {
+    if (event.status === 'cancelado') {
+      message.error('El evento ya está cancelado');
+      return;
+    }
+
+    if (event.status === 'finalizado') {
+      message.error('No se puede cancelar un evento finalizado');
+      return;
+    }
+
+    Modal.confirm({
+      title: '¿Cancelar este evento?',
+      content: (
+        <Text>
+          Estás por cancelar <Text strong>"{event.title}"</Text>. Las reservas activas asociadas
+          pasarán a estado cancelado.
+        </Text>
+      ),
+      okText: 'Sí, cancelar evento',
+      okType: 'danger',
+      cancelText: 'Volver',
+      onOk: async () => {
+        try {
+          setCancellingId(event._id);
+          const cancelledEvent = await eventService.cancelEvent(event._id);
+          message.success('Evento cancelado exitosamente');
+          setEvents(prev => prev.map(e => e._id === event._id ? cancelledEvent : e));
+        } catch (err) {
+          message.error(err instanceof Error ? err.message : 'Error al cancelar evento');
+        } finally {
+          setCancellingId(null);
         }
       }
     });
@@ -168,8 +207,10 @@ const MyEventsPage: React.FC = () => {
         <Row gutter={[16, 16]}>
           {events.map((event) => {
             const isDeleting = deletingId === event._id;
+            const isCancelling = cancellingId === event._id;
             const canEdit = event.status === 'activo' && event.currentParticipants === 0;
             const canDelete = event.status === 'activo' && event.currentParticipants === 0;
+            const canCancel = event.status === 'activo' || event.status === 'agotado';
 
             return (
               <Col xs={24} md={12} lg={8} key={event._id}>
@@ -199,6 +240,23 @@ const MyEventsPage: React.FC = () => {
                         onClick={() => handleExportCSV(event._id)}
                       >
                         Inscriptos
+                      </Button>
+                    </Tooltip>,
+
+                    // Cancelar evento — cambia el estado y cancela reservas activas
+                    <Tooltip
+                      key="cancel-event"
+                      title={!canCancel ? 'Solo se pueden cancelar eventos activos o agotados' : ''}
+                    >
+                      <Button
+                        type="link"
+                        danger
+                        icon={<CloseCircleOutlined />}
+                        disabled={!canCancel}
+                        loading={isCancelling}
+                        onClick={() => handleCancelEvent(event)}
+                      >
+                        Cancelar
                       </Button>
                     </Tooltip>,
 

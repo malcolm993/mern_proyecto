@@ -21,7 +21,9 @@ router.use(authenticateToken);
 
 router.post("/", requireAdmin, EventController.createEvent);
 router.post("/:eventId/agenda", requireAdmin, AgendaController.createAgendaItem);
+router.patch("/:eventId/cancel", requireAdmin, EventController.cancelEvent);
 router.patch("/:eventId", requireAdmin, EventController.updateEvent);
 router.delete("/:eventId", requireAdmin, EventController.deleteEvent);
+
 
 export default router;

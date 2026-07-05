@@ -4,6 +4,8 @@ import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import Event from "../models/event";
 import Reservation from "../models/reservation";
+import AgendaItem from "../models/agendaItem";
+import { updateEventStatuses } from "../services/eventStatusService";
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -112,7 +114,7 @@ export const getEventById: RequestHandler = async (req, res, next) => {
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
-
+    await updateEventStatuses();
     const event = await Event.findById(eventId);
 
     if (!event) {
@@ -139,6 +141,61 @@ export const getEventById: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const cancelEvent: RequestHandler<{ eventId: string }> = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw createHttpError(401, 'Usuario no autenticado');
+    }
+
+    if (!mongoose.isValidObjectId(eventId)) {
+      throw createHttpError(400, 'ID de evento no válido');
+    }
+
+    await updateEventStatuses();
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      throw createHttpError(404, 'Evento no encontrado');
+    }
+
+    if (event.createdBy.toString() !== userId) {
+      throw createHttpError(403, 'Solo el organizador que creó el evento puede cancelarlo');
+    }
+
+    if (event.status === 'cancelado') {
+      throw createHttpError(400, 'El evento ya está cancelado');
+    }
+
+    if (event.status === 'finalizado') {
+      throw createHttpError(400, 'No se puede cancelar un evento finalizado');
+    }
+
+    event.status = 'cancelado';
+    await event.save();
+
+    await Reservation.updateMany(
+      {
+        event: eventId,
+        status: 'active'
+      },
+      {
+        $set: { status: 'cancelled' }
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Evento cancelado exitosamente',
+      data: event
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // ACTUALIZAR EVENTO (con validaciones de permisos)
 export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEventRequest> = async (req, res, next) => {
   try {
@@ -155,6 +212,7 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
     }
 
     // Buscar evento
+    await updateEventStatuses();
     const event = await Event.findById(eventId);
 
     if (!event) {
@@ -197,6 +255,9 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
       throw createHttpError(400, 'No se puede actualizar currentParticipants directamente');
     }
 
+    if ('status' in updateData) {
+      throw createHttpError(400, 'No se puede actualizar el estado directamente');
+    }
     // Actualizar solo los campos proporcionados
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
@@ -219,7 +280,7 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
 };
 
 // ELIMINAR EVENTO (con validaciones de permisos)
-export const deleteEvent: RequestHandler = async (req, res, next) => {
+export const deleteEvent: RequestHandler<{ eventId: string }> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
     const userId = req.user?.userId;
@@ -231,9 +292,11 @@ export const deleteEvent: RequestHandler = async (req, res, next) => {
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
+    await updateEventStatuses(); // Actualizar el estado de los eventos expirados
 
     // Buscar evento
     const event = await Event.findById(eventId);
+
 
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
@@ -254,6 +317,7 @@ export const deleteEvent: RequestHandler = async (req, res, next) => {
 
 
     // Eliminar evento
+    await AgendaItem.deleteMany({ event: eventId }); // Eliminar items de agenda asociados
     await Event.findByIdAndDelete(eventId);
 
     res.status(200).json({
@@ -328,15 +392,7 @@ export const getFilteredEvents: RequestHandler<unknown, unknown, unknown, Events
     }
 
     // Actualizar automáticamente eventos finalizados
-    const now = new Date();
-    await Event.updateMany(
-      {
-        ...filter,
-        endDateTime: { $lt: now },
-        status: { $in: ['activo', 'agotado'] }
-      },
-      { status: 'finalizado' }
-    );
+    await updateEventStatuses();
 
     const [events, totalEvents] = await Promise.all([
       Event.find(filter)
@@ -368,9 +424,10 @@ export const getFilteredEvents: RequestHandler<unknown, unknown, unknown, Events
 
 // OBTENER EVENTOS DEL USUARIO ACTUAL
 export const getMyEvents: RequestHandler = async (req, res, next) => {
+
   try {
     const userId = req.user?.userId;
-
+    await updateEventStatuses();
     if (!userId) {
       throw createHttpError(401, 'Usuario no autenticado');
     }
@@ -391,18 +448,22 @@ export const getPublicEvents: RequestHandler<unknown, unknown, unknown, EventsFi
     const page = parseInt(req.query.page || '1');
     const limit = parseInt(req.query.limit || '6');
     const skip = (page - 1) * limit;
+    const now = new Date();
 
-    const filter: any = { status: 'activo' };
+    await updateEventStatuses();
+
+    const filter: any = { status: 'activo', startDateTime: { $gte: now } };
 
     if (req.query.interestCategory) {
       filter.interestCategory = req.query.interestCategory;
     }
 
     if (req.query.dateFrom || req.query.dateTo) {
-      filter.startDateTime = {};
+      filter.startDateTime = { $gte: now }; // Asegurarse de que los eventos sean futuros
 
       if (req.query.dateFrom) {
-        filter.startDateTime.$gte = new Date(req.query.dateFrom);
+        const dateFrom = new Date(req.query.dateFrom);
+        filter.startDateTime.$gte = dateFrom > now ? dateFrom : now; // No permitir fechas pasadas
       }
 
       if (req.query.dateTo) {
@@ -453,10 +514,11 @@ export const getPublicEventById: RequestHandler<{ eventId: string }> = async (re
     if (!mongoose.isValidObjectId(eventId)) {
       throw createHttpError(400, 'ID de evento no válido');
     }
-
+    await updateEventStatuses();
     const event = await Event.findOne({
       _id: eventId,
-      status: 'activo'
+      status: 'activo',
+      startDateTime: { $gte: new Date() }
     });
 
     if (!event) {

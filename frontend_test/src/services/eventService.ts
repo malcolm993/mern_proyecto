@@ -3,9 +3,9 @@ import { api } from './api';
 import { Event, EventsResponse, EventsFilter, CreateEventRequest, EventResponse, UpdateEventRequest } from '../types/event.types';
 
 export const eventService = {
-  // Obtener todos los eventos
-  getEventsAll: async (): Promise<Event[]> => {
-    const response = await api.get<Event[]>('/events');
+  // Obtener todos los eventos actualmente no tiene uso
+  getEventsAll: async (): Promise<EventResponse[]> => {
+    const response = await api.get<EventResponse[]>('/events');
     return response.data;
   },
 
@@ -28,6 +28,14 @@ export const eventService = {
   updateEvent: async (id: string, eventData: UpdateEventRequest): Promise<Event> => {
     const response = await api.patch<Event>(`/events/${id}`, eventData);
     return response.data;
+  },
+
+  // Cancelar evento (solo admin creador)
+  cancelEvent: async (id: string): Promise<Event> => {
+    const response = await api.patch<{ success: boolean; message: string; data: Event }>(
+      `/events/${id}/cancel`
+    );
+    return response.data.data;
   },
 
   // Eliminar evento (solo admin creador)
@@ -57,18 +65,21 @@ export const eventService = {
   },
 
   // Descargar listado de inscriptos en CSV (solo admin creador del evento)
-  exportReservationsCSV: (eventId: string): void => {
-    // Obtener el token del localStorage para enviarlo en la URL
-    // El backend valida el token y verifica que sea el creador del evento
-    const token = localStorage.getItem('token');
-    const url = `${import.meta.env.VITE_API_URL}/reservations/event/${eventId}/export?token=${token}`;
+exportReservationsCSV: async (eventId: string): Promise<void> => {
+  const response = await api.get(`/reservations/event/${eventId}/export`, {
+    responseType: 'blob'
+  });
 
-    // Crear un link temporal y hacer click para descargar el archivo
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', '');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  },
-};
+  const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `inscriptos_${eventId}.csv`);
+  document.body.appendChild(link);
+  link.click();
+
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+}

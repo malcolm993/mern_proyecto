@@ -52,12 +52,12 @@ export const register: RequestHandler<unknown, unknown, RegisterRequest> = async
     }
 
     if (password.length < 6) {
-      throw createHttpError(400, 'La contraseÃ±a debe tener al menos 6 caracteres');
+      throw createHttpError(400, 'La contraseña debe tener al menos 6 caracteres');
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw createHttpError(409, 'El email ya estÃ¡ registrado');
+      throw createHttpError(409, 'El email ya está registrado');
     }
 
     const userData: Record<string, unknown> = {
@@ -107,12 +107,12 @@ export const login: RequestHandler<unknown, unknown, LoginRequest> = async (req,
 
     const user = await User.findOne({ email });
     if (!user) {
-      throw createHttpError(401, 'Credenciales invÃ¡lidas');
+      throw createHttpError(401, 'Credenciales inválidas');
     }
 
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
-      throw createHttpError(401, 'Credenciales invÃ¡lidas');
+      throw createHttpError(401, 'Credenciales inválidas');
     }
 
     const token = generateToken({
