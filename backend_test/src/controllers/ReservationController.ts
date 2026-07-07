@@ -1,84 +1,28 @@
-// backend/src/controllers/reservationController.ts
 import { RequestHandler } from "express";
 import createHttpError from "http-errors";
 import mongoose from "mongoose";
 import Reservation from "../models/reservation";
 import Event from "../models/event";
-import { CreateReservationRequest, ReservationResponse, UserReservationsResponse,EventReservationsResponse } from "../types/reservation.type";
+import {
+  CreateReservationRequest,
+  ReservationResponse,
+  UserReservationsResponse,
+  EventReservationsResponse
+} from "../types/reservation.type";
+import { cancelUserReservation, createReservationForEvent } from "../services/reservationService";
+import { getAuthenticatedUserId, validateObjectId } from "../services/requestValidationService";
+import { ensureEventCreator } from "../services/eventPermissionService";
 
-// Crear nueva reserva
 export const createReservation: RequestHandler<unknown, unknown, CreateReservationRequest> = async (req, res, next) => {
   try {
     const { eventId } = req.body;
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
     if (!eventId) {
       throw createHttpError(400, 'ID de evento es requerido');
     }
 
-    // Validar que el evento existe
-    const event = await Event.findById(eventId);
-    if (!event) {
-      throw createHttpError(404, 'Evento no encontrado');
-    }
-
-    // Validar que el evento está activo
-    if (event.status !== 'activo') {
-      throw createHttpError(400, `No se puede reservar un evento con estado: ${event.status}`);
-    }
-
-    // Validar que el evento no ha comenzado
-    const now = new Date();
-    if (new Date(event.startDateTime) <= now) {
-      throw createHttpError(400, 'No se puede reservar un evento que ya ha comenzado');
-    }
-
-    // Validar que no está lleno
-    if (event.currentParticipants >= event.maxParticipants) {
-      throw createHttpError(400, 'El evento ha alcanzado el máximo de participantes');
-    }
-
-    // Validar límite de 3 reservas activas por usuario
-    const activeReservationsCount = await Reservation.countDocuments({
-      user: userId,
-      status: 'active'
-    });
-
-    if (activeReservationsCount >= 3) {
-      throw createHttpError(400, 'Límite de 3 reservas activas alcanzado');
-    }
-
-    // Validar que no tiene ya una reserva activa para este evento
-    const existingReservation = await Reservation.findOne({
-      user: userId,
-      event: eventId,
-      status: 'active'
-    });
-
-    if (existingReservation) {
-      throw createHttpError(400, 'Ya tienes una reserva activa para este evento');
-    }
-
-    // Crear la reserva
-    const reservation = await Reservation.create({
-      user: userId,
-      event: eventId,
-      status: 'active'
-    });
-
-    // Incrementar currentParticipants en el evento
-    event.currentParticipants += 1;
-
-    // Actualizar estado si se llenó
-    if (event.currentParticipants >= event.maxParticipants) {
-      event.status = 'agotado';
-    }
-
-    await event.save();
+    const { reservation, event } = await createReservationForEvent(userId, eventId);
 
     const response: ReservationResponse = {
       success: true,
@@ -105,57 +49,14 @@ export const createReservation: RequestHandler<unknown, unknown, CreateReservati
   }
 };
 
-// Cancelar reserva
-export const cancelReservation: RequestHandler = async (req, res, next) => {
+export const cancelReservation: RequestHandler<{ reservationId: string }> = async (req, res, next) => {
   try {
     const { reservationId } = req.params;
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
+    validateObjectId(reservationId, 'ID de reserva');
 
-    if (!mongoose.isValidObjectId(reservationId)) {
-      throw createHttpError(400, 'ID de reserva no válido');
-    }
-
-    // Buscar reserva
-    const reservation = await Reservation.findById(reservationId).populate('event');
-    if (!reservation) {
-      throw createHttpError(404, 'Reserva no encontrada');
-    }
-
-    // Validar que el usuario es el dueño de la reserva
-    if (reservation.user.toString() !== userId) {
-      throw createHttpError(403, 'No tienes permisos para cancelar esta reserva');
-    }
-
-    // Validar que la reserva está activa
-    if (reservation.status !== 'active') {
-      throw createHttpError(400, `No se puede cancelar una reserva con estado: ${reservation.status}`);
-    }
-
-    // Validar que el evento no ha comenzado
-    const event = await Event.findById(reservation.event);
-    if (event && new Date(event.startDateTime) <= new Date()) {
-      throw createHttpError(400, 'No se puede cancelar una reserva de un evento que ya ha comenzado');
-    }
-
-    // Cancelar reserva
-    reservation.status = 'cancelled';
-    await reservation.save();
-
-    // Decrementar currentParticipants en el evento
-    if (event) {
-      event.currentParticipants = Math.max(0, event.currentParticipants - 1);
-
-      // Reactivar evento si estaba agotado
-      if (event.status === 'agotado' && event.currentParticipants < event.maxParticipants) {
-        event.status = 'activo';
-      }
-
-      await event.save();
-    }
+    const { reservation, event } = await cancelUserReservation(reservationId, userId);
 
     res.status(200).json({
       success: true,
@@ -177,14 +78,9 @@ export const cancelReservation: RequestHandler = async (req, res, next) => {
   }
 };
 
-// Obtener reservas del usuario actual
 export const getUserReservations: RequestHandler = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
     const reservations = await Reservation.find({ user: userId })
       .populate('event', 'title startDateTime endDateTime location status interestCategory')
@@ -194,29 +90,26 @@ export const getUserReservations: RequestHandler = async (req, res, next) => {
       success: true,
       data: {
         reservations: reservations.map(reservation => {
-          // Validar que el evento está poblado
           if (!reservation.event || typeof reservation.event === 'string') {
             throw createHttpError(500, 'Error al cargar detalles del evento');
           }
 
-          // Asegurar que tenemos un objeto de evento válido
           const event = reservation.event as any;
 
           return {
             _id: reservation._id.toString(),
             user: reservation.user.toString(),
-            event: event._id.toString(), // ID del evento
+            event: event._id.toString(),
             status: reservation.status,
             createdAt: reservation.createdAt.toISOString(),
-            // updatedAt no está en la interfaz, así que lo omitimos
             eventDetails: {
-              _id: event._id.toString(), // ✅ Corregido: usar event._id
+              _id: event._id.toString(),
               title: event.title || '',
               startDateTime: event.startDateTime?.toISOString() || '',
               endDateTime: event.endDateTime?.toISOString() || '',
               location: event.location || '',
               status: event.status || '',
-              interestCategory: event.interestCategory || '' // ✅ Agregado
+              interestCategory: event.interestCategory || ''
             }
           };
         })
@@ -227,16 +120,11 @@ export const getUserReservations: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
+};
 
-// Obtener estadísticas de reservas del usuario
 export const getReservationStats: RequestHandler = async (req, res, next) => {
   try {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
     const stats = await Reservation.aggregate([
       { $match: { user: new mongoose.Types.ObjectId(userId) } },
@@ -269,25 +157,16 @@ export const getReservationStats: RequestHandler = async (req, res, next) => {
 export const getEventReservations: RequestHandler<{ eventId: string }> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
-
-    if (!mongoose.isValidObjectId(eventId)) {
-      throw createHttpError(400, 'ID de evento no válido');
-    }
+    validateObjectId(eventId, 'ID de evento');
 
     const event = await Event.findById(eventId);
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
 
-    // Solo el organizador que creó el evento puede ver el listado
-    if (event.createdBy.toString() !== userId) {
-      throw createHttpError(403, 'No tienes permiso para ver los inscriptos de este evento');
-    }
+    ensureEventCreator(event, userId, 'No tienes permiso para ver los inscriptos de este evento');
 
     const reservations = await Reservation.find({ event: eventId })
       .populate('user', 'name email company businessArea')
@@ -327,39 +206,28 @@ export const getEventReservations: RequestHandler<{ eventId: string }> = async (
   }
 };
 
-// Exportar listado de inscriptos como CSV (solo el organizador que creó el evento)
 export const exportEventReservationsCSV: RequestHandler<{ eventId: string }> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    const userId = req.user?.userId;
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
-    if (!userId) {
-      throw createHttpError(401, 'Usuario no autenticado');
-    }
-
-    if (!mongoose.isValidObjectId(eventId)) {
-      throw createHttpError(400, 'ID de evento no válido');
-    }
+    validateObjectId(eventId, 'ID de evento');
 
     const event = await Event.findById(eventId);
     if (!event) {
       throw createHttpError(404, 'Evento no encontrado');
     }
 
-    if (event.createdBy.toString() !== userId) {
-      throw createHttpError(403, 'No tienes permiso para exportar los inscriptos de este evento');
-    }
+    ensureEventCreator(event, userId, 'No tienes permiso para exportar los inscriptos de este evento');
 
     const reservations = await Reservation.find({ event: eventId, status: 'active' })
       .populate('user', 'name email company businessArea')
       .sort({ createdAt: 1 });
 
-    // Construcción manual del CSV (sin librerías externas)
     const headers = ['Nombre', 'Email', 'Empresa', 'Rubro', 'Fecha de inscripcion'];
 
     const escapeCsvField = (value: string): string => {
       const stringValue = value ?? '';
-      // Si contiene coma, comillas o salto de línea, se envuelve en comillas dobles
       if (/[",\n]/.test(stringValue)) {
         return `"${stringValue.replace(/"/g, '""')}"`;
       }
@@ -378,8 +246,6 @@ export const exportEventReservationsCSV: RequestHandler<{ eventId: string }> = a
     });
 
     const csvContent = [headers.join(','), ...rows].join('\n');
-
-    // BOM UTF-8 para que Excel interprete correctamente acentos y ñ
     const bom = '\uFEFF';
     const fileName = `inscriptos_${event.title.replace(/[^a-zA-Z0-9]/g, '_')}.csv`;
 
