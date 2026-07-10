@@ -1,0 +1,107 @@
+Fase 7.1: Backend De Valoraciones
+Crear eventReviewService.ts.
+
+Crear función para validar si un usuario puede valorar:
+evento existe;
+evento está finalizado;
+usuario tuvo reserva del evento;
+usuario no valoró antes;
+rating entre 1 y 5;
+comment máximo 100 caracteres.
+
+Crear función para recalcular promedio:
+contar reviews del evento;
+sumar ratings;
+calcular promedio;
+actualizar Event.averageRating;
+actualizar Event.ratingCount.
+
+Crear EventReviewController.ts.
+
+Crear endpoints:
+POST /api/events/:eventId/reviews
+GET /api/events/:eventId/reviews
+GET /api/events/:eventId/reviews/my-review
+
+Agregar rutas en eventsRoute.ts o crear eventReviewRoute.ts.
+
+Fase 7.2: Frontend De Valoraciones
+Agregar tipos frontend:
+EventReview;
+CreateEventReviewRequest;
+EventReviewResponse.
+
+Crear eventReviewService.ts en frontend.
+
+Mostrar promedio en tarjetas de eventos:
+averageRating;
+ratingCount.
+
+Mostrar promedio en detalle de evento.
+
+Crear componente EventReviewForm:
+estrellas o selector 1 a 5;
+comentario opcional;
+botón enviar.
+
+Mostrar formulario solo si:usuario está logueado;
+usuario es participante;
+evento está finalizado;
+usuario tuvo reserva;
+usuario no valoró antes.
+
+Crear listado simple de valoraciones del evento.
+Fase 7.3: Verificación
+Probar con Postman:valorar evento finalizado con reserva;
+intentar valorar evento activo;
+intentar valorar sin reserva;
+intentar valorar dos veces;
+rating menor a 1;
+rating mayor a 5;
+comentario mayor a 100 caracteres;
+verificar que averageRating y ratingCount se actualizan.
+
+Probar en frontend:promedio visible;
+formulario aparece solo cuando corresponde;
+valoración enviada correctamente;
+al valorar, cambia el promedio.
+
+Fase 8: Notificaciones
+Crear notificationService.ts.
+
+Generar notificaciones cuando:
+evento cancelado;
+solicitud de contacto recibida;
+solicitud de contacto aceptada;
+evento próximo.
+
+Crear NotificationController.
+
+Crear endpoints:
+
+GET /api/notifications
+GET /api/notifications/unread-count
+PATCH /api/notifications/:id/read
+PATCH /api/notifications/read-all
+Frontend:badge en Navbar;
+vista /notifications;
+marcar como leída.
+
+Fase 9: Mensajes
+Crear backend de mensajes:enviar mensaje;
+listar conversación;
+listar conversaciones o usuarios con mensajes;
+marcar mensajes como leídos.
+
+Frontend:vista /messages;
+listado de conversaciones;
+panel de conversación;
+formulario de envío.
+
+Fase 10: Informe Final
+Actualizar documentación:modelos nuevos;
+relaciones;
+reglas de negocio;
+flujo de datos;
+endpoints agregados;
+decisiones técnicas.

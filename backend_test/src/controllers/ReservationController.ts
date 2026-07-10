@@ -256,3 +256,7 @@ export const exportEventReservationsCSV: RequestHandler<{ eventId: string }> = a
     next(error);
   }
 };
+export const getReservationByEventAndUser = async (eventId: string, userId: string) => {
+  const reservation = await Reservation.findOne({ event: eventId, user: userId, status: 'active' });
+  return reservation;
+};

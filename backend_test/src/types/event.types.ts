@@ -1,4 +1,4 @@
-// backend/src/types/event.types.ts
+﻿// backend/src/types/event.types.ts
 import { Types } from "mongoose";
 
 export interface Event {
@@ -11,8 +11,10 @@ export interface Event {
   maxParticipants: number;
   currentParticipants: number;
   status: 'activo' | 'cancelado' | 'finalizado' | 'agotado';
-  interestCategory: 'tecnología' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking';
+  interestCategory: 'tecnologÃ­a' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking';
   createdBy: Types.ObjectId | string;
+  averageRating: number;
+  ratingCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

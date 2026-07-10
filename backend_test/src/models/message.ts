@@ -1,12 +1,5 @@
-import { Schema, model, Document, Types } from "mongoose";
-
-export interface Message extends Document {
-  from: Types.ObjectId;
-  to: Types.ObjectId;
-  message: string;
-  read: boolean;
-  createdAt: Date;
-}
+import { Schema, model } from "mongoose";
+import { Message } from "../types/message.types";
 
 const messageSchema = new Schema({
   from: {

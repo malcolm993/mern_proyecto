@@ -221,6 +221,9 @@ export const updateEvent: RequestHandler<{ eventId: string }, unknown, UpdateEve
     if ('status' in updateData) {
       throw createHttpError(400, 'No se puede actualizar el estado directamente');
     }
+    if ('averageRating' in updateData || 'ratingCount' in updateData) {
+      throw createHttpError(400, 'La valoración del evento no se modifica desde la edición general');
+    }
     // Actualizar solo los campos proporcionados
     const updatedEvent = await Event.findByIdAndUpdate(
       eventId,
