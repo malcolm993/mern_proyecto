@@ -9,3 +9,8 @@ export interface EventReview {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface CreateEventReviewRequest {
+  rating: number;
+  comment?: string;
+}

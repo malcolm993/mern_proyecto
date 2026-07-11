@@ -16,7 +16,7 @@ import {
   EventsResponse
 } from "../types/event.types";
 
-// CREAR NUEVO EVENTO (con autenticaciÃ³n y validaciones completas)
+// CREAR NUEVO EVENTO (con autenticación y validaciones completas)
 export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> = async (req, res, next) => {
   try {
     const userId = getAuthenticatedUserId(req.user?.userId);
@@ -31,15 +31,15 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> =
       interestCategory,
     } = req.body;
 
-    // Validaciones bÃ¡sicas
+    // Validaciones básicas
     if (!title?.trim()) {
-      throw createHttpError(400, 'El tÃ­tulo es requerido');
+      throw createHttpError(400, 'El título es requerido');
     }
     if (!description?.trim()) {
-      throw createHttpError(400, 'La descripciÃ³n es requerida');
+      throw createHttpError(400, 'La descripción es requerida');
     }
     if (!location?.trim()) {
-      throw createHttpError(400, 'La ubicaciÃ³n es requerida');
+      throw createHttpError(400, 'La ubicación es requerida');
     }
     if (!startDateTime) {
       throw createHttpError(400, 'La fecha de inicio es requerida');
@@ -48,10 +48,10 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> =
       throw createHttpError(400, 'La fecha de fin es requerida');
     }
     if (!maxParticipants || maxParticipants < 1 || maxParticipants > 10) {
-      throw createHttpError(400, 'El nÃºmero de participantes debe ser entre 1 y 10');
+      throw createHttpError(400, 'El número de participantes debe ser entre 1 y 10');
     }
     if (!interestCategory?.trim()) {
-      throw createHttpError(400, 'La categorÃ­a es requerida');
+      throw createHttpError(400, 'La categoría es requerida');
     }
 
     // Validar fechas
@@ -67,10 +67,10 @@ export const createEvent: RequestHandler<unknown, unknown, CreateEventRequest> =
       throw createHttpError(400, 'La fecha de fin debe ser posterior al inicio');
     }
 
-    // Validar categorÃ­a
-    const validCategories = ['tecnologÃ­a', 'negocios', 'artes', 'deportes', 'educacion', 'networking'];
+    // Validar categoría
+    const validCategories = ['tecnología', 'negocios', 'artes', 'deportes', 'educacion', 'networking'];
     if (!validCategories.includes(interestCategory)) {
-      throw createHttpError(400, 'CategorÃ­a no vÃ¡lida');
+      throw createHttpError(400, 'Categoría no válida');
     }
 
     // Crear evento con createdBy

@@ -2,6 +2,7 @@ import createHttpError from "http-errors";
 import Event from "../models/event";
 import Reservation from "../models/reservation";
 import EventReview from "../models/eventReview";
+import Mongoose from "mongoose";
 
 export const validateReviewCreation = async (
   eventId: string,
@@ -9,6 +10,9 @@ export const validateReviewCreation = async (
   rating: number,
   comment?: string
 ) => {
+  if (!Mongoose.Types.ObjectId.isValid(eventId)) {
+    throw createHttpError(400, 'ID de evento inválido');
+  }
   const event = await Event.findById(eventId);
 
   if (!event) {
@@ -49,15 +53,15 @@ export const validateReviewCreation = async (
   return event;
 };
 
-export const createEventReview = async (
+export const createEventReviewService = async (
   eventId: string,
   userId: string,
   rating: number,
   comment?: string
 ) => {
   await validateReviewCreation(eventId, userId, rating, comment);
- 
-  const reviewData:{
+
+  const reviewData: {
     event: string;
     user: string;
     rating: number;
@@ -65,7 +69,7 @@ export const createEventReview = async (
   } = {
     event: eventId,
     user: userId,
-    rating, 
+    rating,
   }
 
   const trimmedComment = comment?.trim();
@@ -82,7 +86,7 @@ export const createEventReview = async (
 
 export const recalculateEventRating = async (eventId: string) => {
   const stats = await EventReview.aggregate([
-    { $match: { event: eventId } },
+    { $match: { event: new Mongoose.Types.ObjectId(eventId) } },
     {
       $group: {
         _id: '$event',
@@ -102,3 +106,29 @@ export const recalculateEventRating = async (eventId: string) => {
   );
 };
 
+export const getEventReviewsService = async (eventId: string) => {
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw createHttpError(404, 'Evento no encontrado');
+  }
+
+  const reviews = await EventReview.find({ event: eventId }).populate('user', 'name email').sort({ createdAt: -1 });
+  return reviews;
+};
+export const getUserEventReviewService = async (eventId: string, userId: string) => {
+  const event = await Event.findById(eventId);
+  if (!event) {
+    throw createHttpError(404, 'Evento no encontrado');
+  }
+  if (!userId) {
+    throw createHttpError(400, 'ID de usuario no proporcionado');
+  }
+  const review = await EventReview.findOne({ event: eventId, user: userId }).populate('user', 'name email');
+  return review;
+};
+
+export const getAllReviewsByUserService = async (userId: string) => {
+  const reviews = await EventReview.find({ user: userId })
+    .populate('event', 'title startDateTime endDateTime status averageRating').sort({ createdAt: -1 });
+  return reviews;
+}
