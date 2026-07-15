@@ -1,4 +1,4 @@
-// frontend/src/types/event.ts
+﻿// frontend/src/types/event.ts
 export interface Event {
   _id: string
   title: string
@@ -9,7 +9,9 @@ export interface Event {
   maxParticipants: number
   currentParticipants: number
   status: 'activo' | 'cancelado' | 'finalizado' | 'agotado'
-  interestCategory: 'tecnología' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking'
+  interestCategory: 'tecnologÃ­a' | 'negocios' | 'artes' | 'deportes' | 'educacion' | 'networking'
+  averageRating: number
+  ratingCount: number
   createdAt: string
   updatedAt: string
 }
@@ -84,3 +86,4 @@ export interface AgendaItem {
   createdAt: string;
   updatedAt: string;
 }
+
