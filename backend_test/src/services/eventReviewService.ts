@@ -2,7 +2,7 @@ import createHttpError from "http-errors";
 import Event from "../models/event";
 import Reservation from "../models/reservation";
 import EventReview from "../models/eventReview";
-import Mongoose from "mongoose";
+import mongoose from "mongoose";
 
 export const validateReviewCreation = async (
   eventId: string,
@@ -10,7 +10,7 @@ export const validateReviewCreation = async (
   rating: number,
   comment?: string
 ) => {
-  if (!Mongoose.Types.ObjectId.isValid(eventId)) {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
     throw createHttpError(400, 'ID de evento inválido');
   }
   const event = await Event.findById(eventId);
@@ -76,7 +76,15 @@ export const createEventReviewService = async (
   if (trimmedComment) {
     reviewData.comment = trimmedComment;
   }
-  const review = await EventReview.create(reviewData);
+  let review;
+  try {
+    review = await EventReview.create(reviewData);
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw createHttpError(400, 'Ya realizaste una valoración para este evento');
+    }
+    throw error;
+  }
 
   // luego recalcular promedio
   const updatedEvent = await recalculateEventRating(eventId);
@@ -86,7 +94,7 @@ export const createEventReviewService = async (
 
 export const recalculateEventRating = async (eventId: string) => {
   const stats = await EventReview.aggregate([
-    { $match: { event: new Mongoose.Types.ObjectId(eventId) } },
+    { $match: { event: new mongoose.Types.ObjectId(eventId) } },
     {
       $group: {
         _id: '$event',
@@ -107,6 +115,10 @@ export const recalculateEventRating = async (eventId: string) => {
 };
 
 export const getEventReviewsService = async (eventId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    throw createHttpError(400, 'ID de evento inválido');
+  }
+
   const event = await Event.findById(eventId);
   if (!event) {
     throw createHttpError(404, 'Evento no encontrado');
@@ -116,6 +128,10 @@ export const getEventReviewsService = async (eventId: string) => {
   return reviews;
 };
 export const getUserEventReviewService = async (eventId: string, userId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    throw createHttpError(400, 'ID de evento inválido');
+  }
+
   const event = await Event.findById(eventId);
   if (!event) {
     throw createHttpError(404, 'Evento no encontrado');
@@ -124,7 +140,8 @@ export const getUserEventReviewService = async (eventId: string, userId: string)
     throw createHttpError(400, 'ID de usuario no proporcionado');
   }
   const review = await EventReview.findOne({ event: eventId, user: userId }).populate('user', 'name email');
-  return review;
+  const updatedEvent = await recalculateEventRating(eventId);
+  return { review, event: updatedEvent };
 };
 
 export const getAllReviewsByUserService = async (userId: string) => {
@@ -132,3 +149,17 @@ export const getAllReviewsByUserService = async (userId: string) => {
     .populate('event', 'title startDateTime endDateTime status averageRating').sort({ createdAt: -1 });
   return reviews;
 }
+
+export const deleteEventReviewService = async (eventId: string, userId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    throw createHttpError(400, 'ID de evento inválido');
+  }
+  if (!userId) {
+    throw createHttpError(400, 'ID de usuario no proporcionado');
+  }
+  const review = await EventReview.findOneAndDelete({ event: eventId, user: userId });
+  if (!review) {
+    throw createHttpError(404, 'Valoración no encontrada');
+  }
+  return review;
+};
