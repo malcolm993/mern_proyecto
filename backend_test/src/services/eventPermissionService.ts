@@ -1,4 +1,5 @@
 import createHttpError from "http-errors";
+import Reservation from "../models/reservation";
 
 type EventLike = {
   createdBy: {
@@ -18,6 +19,23 @@ export const ensureEventCreator = (
   }
 };
 
+export const ensureUserHasReservationForEvent = async (
+  eventId: string,
+  userId: string,
+  message = 'No tienes una reserva para este evento'
+) => {
+  const reservation = await Reservation.findOne({
+    event: eventId,
+    user: userId
+  });
+
+  if (!reservation) {
+    throw createHttpError(400, message);
+  }
+
+  return reservation;
+};
+
 export const ensureEventIsActive = (
   event: Pick<EventLike, 'status'>,
   message = 'Solo eventos activos pueden modificarse'
@@ -34,4 +52,22 @@ export const ensureEventHasNoParticipants = (
   if (event.currentParticipants > 0) {
     throw createHttpError(400, message);
   }
+};
+
+export const ensureUserCompletedReservationForEvent = async (
+  eventId: string,
+  userId: string,
+  message = 'No tienes una reserva completada para este evento'
+) => {
+  const reservation = await Reservation.findOne({
+    event: eventId,
+    user: userId,
+    status: 'completed'
+  });
+
+  if (!reservation) {
+    throw createHttpError(400, message);
+  }
+
+  return reservation;
 };

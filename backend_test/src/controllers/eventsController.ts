@@ -7,7 +7,7 @@ import AgendaItem from "../models/agendaItem";
 import { updateEventStatuses } from "../services/eventStatusService";
 import { cancelEventWithReservations } from "../services/eventCancellationService";
 import { getAuthenticatedUserId, validateObjectId } from "../services/requestValidationService";
-import { ensureEventCreator, ensureEventHasNoParticipants, ensureEventIsActive } from "../services/eventPermissionService";
+import { ensureEventCreator, ensureEventHasNoParticipants, ensureEventIsActive, ensureUserHasReservationForEvent } from "../services/eventPermissionService";
 import {
   CreateEventRequest,
   UpdateEventRequest,
@@ -481,6 +481,30 @@ export const getPublicEventById: RequestHandler<{ eventId: string }> = async (re
   }
 };
 
+export const getAccessibleEventDetail: RequestHandler<{ eventId: string }> = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const userId = getAuthenticatedUserId(req.user?.userId);
 
+    validateObjectId(eventId, 'ID de evento');
 
+    await updateEventStatuses();
 
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      throw createHttpError(404, 'Evento no encontrado');
+    }
+    if (req.user?.role === 'admin') {
+      ensureEventCreator(event, userId, 'Solo el organizador que creó el evento puede ver este detalle');
+    } else {
+      await ensureUserHasReservationForEvent(eventId, userId);
+    }
+    res.status(200).json({
+      success: true,
+      data: event
+    });
+  } catch (error) {
+    next(error);
+  }
+};

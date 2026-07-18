@@ -15,7 +15,6 @@ router.get("/admin", authenticateToken, requireAdmin, EventController.getFiltere
 
 // Rutas públicas dinámicas — al final para no capturar las estáticas
 router.get("/:eventId/agenda", AgendaController.getPublicEventAgenda);
-router.get("/:eventId/reviews", EventReviewController.getEventReviews);
 router.get("/:eventId", EventController.getPublicEventById);
 
 // Middleware global para el resto de rutas autenticadas
@@ -23,10 +22,13 @@ router.use(authenticateToken);
 
 router.post("/", requireAdmin, EventController.createEvent);
 router.post("/:eventId/agenda", requireAdmin, AgendaController.createAgendaItem);
+router.get("/:eventId/accessible-detail", EventController.getAccessibleEventDetail);
+router.get("/:eventId/reviews/my-review", requireRole('user'), EventReviewController.getMyEventReview);
+router.get("/:eventId/reviews", EventReviewController.getEventReviews);
 router.post("/:eventId/reviews", requireRole('user'), EventReviewController.createEventReview);
 router.delete("/:eventId/reviews", requireRole('user'), EventReviewController.deleteEventReview);
-router.get("/:eventId/reviews/my-review", requireRole('user'), EventReviewController.getMyEventReview);
 router.patch("/:eventId/cancel", requireAdmin, EventController.cancelEvent);
+
 router.patch("/:eventId", requireAdmin, EventController.updateEvent);
 router.delete("/:eventId", requireAdmin, EventController.deleteEvent);
 

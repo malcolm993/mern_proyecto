@@ -28,7 +28,13 @@ export const createEventReview: RequestHandler<{eventId: string}, unknown,Create
 export const getEventReviews: RequestHandler<{eventId: string}> = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    const reviews = await getEventReviewsService(eventId);
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw createHttpError(401, 'Usuario no autenticado');
+    }
+
+    const reviews = await getEventReviewsService(eventId, userId, req.user?.role);
     res.status(200).json({
       success: true,
       data: reviews
